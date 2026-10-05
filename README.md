@@ -1,49 +1,59 @@
 # WIFI5soft Vendo OPI1 UNLIMITTED
 
-Private firmware repository for the ETHYLNET Unlimited Orange Pi One build.
+Private repository for the verified Unlimited Orange Pi One firmware build.
 
-## Release
+## Stable Release
 
-Stable release line:
+**v1.0.0**
 
-`v1.0.0`
+Firmware:
 
-Firmware format:
+`ETHYLNET-OrangePiOne-SNAPSHOT-r32868-1ceaac207b-UNLIMITED.img.gz`
+
+Format:
 
 `.img.gz`
 
-The firmware release asset preserves the same `.img.gz` file-extension format used by the original source firmware.
+The release retains the same `.img.gz` file-extension format as the original firmware distribution.
 
-## Unlimited Build
+## SHA256
 
-This repository contains the Unlimited-only release.
+Compressed firmware:
 
-No 24-hour trial/test variant is included.
+`633f602d9b46740a13ebf1be82c1bca0417c7cb32d92bb655cb8f0fc8ef04a7c`
 
-## Verified Changes
+Decompressed raw image:
 
-The firmware was independently compared against the original source image.
+`eb23e7e2d8cd2067d692e981b643872d68a3ae767877c80743819aab06a50a53`
 
-Verified root filesystem differences:
+## Final Root Filesystem Audit
 
-- 13 approved remote-access paths removed
-- 5 approved configuration/package files modified
-- 0 unexpected removed paths
-- 0 unexpected added paths
-- 0 unexpected changed files
+The Unlimited firmware was compared directly against the original firmware.
 
-The intentional changes remove the audited active ngrok and ZeroTier components.
+Results:
 
-Generic WireGuard and local Dropbear SSH remain preserved.
+- approved removed paths: 13
+- approved modified files: 5
+- unexpected removed paths: 0
+- unexpected added paths: 0
+- unexpected modified files: 0
+
+Only the explicitly approved remote-access/configuration changes are present.
+
+## Removed Remote Access
+
+- active ngrok runtime/configuration removed
+- active ZeroTier runtime/configuration removed
+- related nginx remote-access configuration removed
+- ZeroTier package metadata removed
 
 ## Preserved Components
 
-The verified build retains:
-
 - ELOAD-containing core application
-- coin functionality
-- voucher functionality
-- session and transaction functionality
+- coin functions
+- voucher functions
+- session functions
+- transaction functions
 - PPPoE
 - PPPoE billing
 - subvendo
@@ -53,10 +63,29 @@ The verified build retains:
 - generic WireGuard
 - local Dropbear SSH
 
-`/soft/index.o` remained byte-identical to the original audited image.
+`/soft/index.o` is byte-identical to the original audited firmware.
 
-## Firmware Asset
+## Product License Audit
 
-The firmware itself is distributed through the GitHub Release page and is not committed directly to the Git repository.
+**PRODUCT LICENSE ENFORCEMENT: NOT DETECTED IN STATIC IMAGE**
 
-Hardware behavior has not yet been verified on a physical Orange Pi One.
+**LICENSE-BASED ARTIFICIAL CAP: NOT DETECTED IN STATIC IMAGE**
+
+No verified activation mechanism, product trial enforcement, or license-based device/slot cap was identified during the static firmware audit.
+
+No speculative product-license binary patch was applied.
+
+## Variant
+
+Unlimited only.
+
+No 24-hour/tester/trial image is part of this release.
+
+## Verification
+
+- static firmware comparison: PASS
+- package integrity: PASS
+- GitHub asset digest verification: PASS
+- GitHub download-back verification: PASS
+
+Physical Orange Pi One hardware testing has not been performed.

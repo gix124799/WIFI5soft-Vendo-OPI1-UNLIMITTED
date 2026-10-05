@@ -1,57 +1,76 @@
 # WIFI5soft Vendo OPI1 UNLIMITTED v1.0.0
 
-Stable GitHub release of the verified Unlimited Orange Pi One firmware image.
+Stable published release of the statically verified Unlimited Orange Pi One firmware.
 
-## Firmware
+## Firmware Asset
 
 `ETHYLNET-OrangePiOne-SNAPSHOT-r32868-1ceaac207b-UNLIMITED.img.gz`
 
-## Format
+Format:
 
 `.img.gz`
 
-The original firmware distribution used an `.img.gz` image, therefore this release retains the same file-extension format.
-
-## SHA256
-
-Compressed release asset:
+Compressed SHA256:
 
 `633f602d9b46740a13ebf1be82c1bca0417c7cb32d92bb655cb8f0fc8ef04a7c`
 
-Decompressed raw image:
+Decompressed raw SHA256:
 
 `eb23e7e2d8cd2067d692e981b643872d68a3ae767877c80743819aab06a50a53`
 
-## Variant
+## Final Comparison Against Original Firmware
 
-Unlimited only.
+The final Unlimited image was independently compared against the original image.
 
-No 24-hour tester or trial variant is part of this release.
+- 13 approved paths removed
+- 5 approved files modified
+- 0 unexpected removed paths
+- 0 unexpected added paths
+- 0 unexpected changed files
 
-## Verified firmware changes
+## Intentional Changes
 
-Only the approved audit changes are present:
+- active ngrok removed
+- active ZeroTier removed
+- associated nginx remote-access configuration removed
+- ZeroTier package/runtime metadata removed
 
-- active ngrok runtime/configuration removed
-- active ZeroTier runtime/configuration removed
-- related nginx configuration updated
-- ZeroTier package records removed
-
-No unexpected root filesystem file additions, removals, or modifications were detected.
-
-## Preserved functionality
+## Preserved Functionality
 
 - ELOAD/core
 - coin/voucher/session/transaction functions
 - PPPoE and billing
 - subvendo
-- LAN admin
+- rental/core application
+- LAN administration
 - media server
 - generic WireGuard
 - local Dropbear SSH
 
-## Verification status
+The core application `/soft/index.o` remains byte-identical to the original audited image.
 
-Static image and package verification: PASS.
+## Product License Audit
 
-Physical Orange Pi One hardware test: NOT YET PERFORMED.
+**Product license enforcement: NOT DETECTED IN STATIC IMAGE**
+
+**License-based artificial cap: NOT DETECTED IN STATIC IMAGE**
+
+No verified product activation mechanism, product trial enforcement, or license-based device/slot cap was identified.
+
+No speculative license patch was applied because no verified enforcement point was found.
+
+## Variant
+
+Unlimited only.
+
+No 24-hour/tester/trial build is included.
+
+## Verification Status
+
+- final static completion audit: PASS
+- unexpected rootfs differences: 0
+- gzip/package verification: PASS
+- GitHub uploaded asset digest: PASS
+- GitHub download-back verification: PASS
+
+Physical Orange Pi One hardware test: NOT PERFORMED.
