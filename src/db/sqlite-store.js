@@ -113,6 +113,7 @@ async function openSqliteStore(options = {}) {
       database.run('PRAGMA user_version = 0');
     }
 
+    database.run('PRAGMA foreign_keys = ON');
     runIntegrityCheck(database);
   } catch (error) {
     if (database) {
@@ -161,6 +162,7 @@ async function openSqliteStore(options = {}) {
     assertOpen();
     runIntegrityCheck(database);
     const bytes = Buffer.from(database.export());
+    database.run('PRAGMA foreign_keys = ON');
 
     await writeAtomicDatabaseFile(
       databasePath,
