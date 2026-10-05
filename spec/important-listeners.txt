@@ -1,0 +1,14 @@
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/etc/nginx/conf.d/nginx.conf:5:    server localhost:3000 max_fails=3 fail_timeout=1s;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/etc/nginx/conf.d/nginx.conf:9:    server localhost:3001;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/etc/nginx/nginx.conf:27:		listen 443 ssl default_server;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/etc/nginx/nginx.conf:28:		listen 80;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/etc/nginx/nginx.conf:39:		listen 4455 ssl default_server;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/etc/nginx/nginx.conf:50:		listen 8081;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/etc/nginx/nginx.conf:56:		listen 4400;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/nginx:6:	list listen '443 ssl default_server'
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/nginx:7:	list listen '10.0.0.1:80'
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/nginx:21:	list listen '4455 ssl default_server'
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/nginx:31:	list listen '11.0.0.1:80'
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/nginx:36:	list listen '10.0.0.1:4400'
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/nginx.conf:5:    server localhost:3000 max_fails=3 fail_timeout=1s;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/nginx.conf:9:    server localhost:3001;

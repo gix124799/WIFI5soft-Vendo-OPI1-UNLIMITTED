@@ -1,0 +1,3 @@
+/mnt/wifi5
+/mnt/wifi5/3pinger
+/mnt/wifi5/pppoe

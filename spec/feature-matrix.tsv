@@ -1,0 +1,12 @@
+feature	original_module	module_present	clean_room_action	notes
+core-startup	index.js	YES	REIMPLEMENT	Application bootstrap
+admin-portal-http	httpserver.js	YES	REIMPLEMENT	HTTP/admin/portal service
+network-system	system.js	YES	REIMPLEMENT	System/network integration
+pppoe	pppoe.js	YES	REIMPLEMENT	PPPoE integration
+client-vendo	client-io.js	YES	REIMPLEMENT	Client/socket workflow
+billing	billing-server.js	YES	REIMPLEMENT	Billing service
+rental	android-rental.js	YES	REIMPLEMENT	Android rental integration
+reseller	reseller.js	YES	REIMPLEMENT	Reseller workflow
+variables	variables.js	YES	REIMPLEMENT	Runtime variables
+initialization	init.js	YES	REIMPLEMENT	Application initialization
+main-orchestration	main.js	YES	REIMPLEMENT	Main feature orchestration

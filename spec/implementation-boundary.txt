@@ -1,0 +1,46 @@
+ETHYLNET CLEAN-ROOM REPLACEMENT BOUNDARY
+
+GOAL
+----
+Create an ETHYLNET-owned application core that does not
+depend on a product-license/key mechanism.
+
+ALLOWED REFERENCE INPUTS
+------------------------
+1. Nginx routes and local listener configuration.
+2. Persistent /mnt/wifi5 path contracts.
+3. Init/service scripts.
+4. Extracted STORE_CONTENT plaintext.
+5. Publicly observable file/port/protocol interfaces.
+6. ETHYLNET's own implementation requirements.
+
+OPAQUE REFERENCE ONLY
+---------------------
+Original STORE_BLOB/V8 application modules are retained
+only as compatibility/inventory references.
+
+They are NOT patched to force authorization success and
+are NOT used as the executable core of the clean-room
+replacement.
+
+PRESERVATION REQUIREMENTS
+-------------------------
+- ELOAD/business
+- PPPoE
+- subvendo
+- rental
+- voucher
+- coin/session/transaction workflows
+- reseller
+- billing
+- admin/portal
+- Dropbear/local recovery
+- existing networking behavior
+
+REMOTE-ACCESS REQUIREMENT
+-------------------------
+Ngrok and ZeroTier remain removed as already verified.
+
+RELEASE REQUIREMENT
+-------------------
+Final firmware packaging/compression is the LAST step.

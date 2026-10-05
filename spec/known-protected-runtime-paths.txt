@@ -1,0 +1,5 @@
+KNOWN_RUNTIME_CONTRACT_NOT_PLAINTEXT_SEEN | /mnt/wifi5/config/eload.json
+KNOWN_RUNTIME_CONTRACT_NOT_PLAINTEXT_SEEN | /mnt/wifi5/eload/cashinsales
+KNOWN_RUNTIME_CONTRACT_NOT_PLAINTEXT_SEEN | /mnt/wifi5/eload/onlinepayment
+KNOWN_RUNTIME_CONTRACT_NOT_PLAINTEXT_SEEN | /mnt/wifi5/eload/sales
+KNOWN_RUNTIME_CONTRACT_NOT_PLAINTEXT_SEEN | /mnt/wifi5/pppoe/billing

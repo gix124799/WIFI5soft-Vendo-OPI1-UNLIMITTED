@@ -1,0 +1,21 @@
+UNRESOLVED CLEAN-ROOM CONTRACTS
+
+1. Exact admin/portal application API endpoints that exist
+   only inside original compiled STORE_BLOB modules.
+
+2. Exact socket event names/payload schemas that exist only
+   inside original compiled application logic.
+
+3. Exact ELOAD business workflow/state transitions not
+   represented by editable filesystem configuration.
+
+4. Exact voucher/coin/session transaction semantics.
+
+5. Exact reseller and billing request/response schemas.
+
+6. Original opaque public.tar.gz transformation into
+   /tmp/i/public.
+
+These must be independently specified/reimplemented.
+They must not be guessed and silently presented as proven
+original behavior.

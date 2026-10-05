@@ -1,0 +1,325 @@
+
+==================================================
+/etc/nginx/nginx.conf
+==================================================
+worker_processes auto;
+
+user root;
+
+events {}
+
+http {
+	access_log off;
+	log_format openwrt
+		'$request_method $scheme://$host$request_uri => $status'
+		' (${body_bytes_sent}B in ${request_time}s) <- $http_referer';
+
+	include mime.types;
+	default_type application/octet-stream;
+	sendfile on;
+
+	client_max_body_size 128M;
+	large_client_header_buffers 2 1k;
+
+	gzip on;
+	gzip_vary on;
+	gzip_proxied any;
+
+	root /www;
+
+	server { #see uci show 'nginx._lan'
+		listen 443 ssl default_server;
+		listen 80;
+		server_name _lan;
+		include restrict_locally;
+		include /soft/config/nginx.locations;
+		ssl_certificate /etc/nginx/conf.d/_lan.crt;
+		ssl_certificate_key /etc/nginx/conf.d/_lan.key;
+		ssl_session_cache shared:SSL:32k;
+		ssl_session_timeout 64m;
+	}
+
+	server { #see uci show 'nginx._subvendo'
+		listen 4455 ssl default_server;
+		server_name _subvendo;
+		include restrict_locally;
+		include /soft/config/subvendo.locations;
+		ssl_certificate /etc/nginx/conf.d/_lan.crt;
+		ssl_certificate_key /etc/nginx/conf.d/_lan.key;
+		ssl_session_cache shared:SSL:32k;
+		ssl_session_timeout 64m;
+	}
+
+	server { #see uci show 'nginx.redirect_pppoe'
+		listen 8081;
+		server_name _pppoe;
+		include /soft/config/pppoe.locations;
+	}
+
+	server { #see uci show 'nginx.media_server'
+		listen 4400;
+		server_name _media;
+		include /soft/config/media.locations;
+	}
+
+	include conf.d/*.conf;
+}
+
+==================================================
+/etc/config/nginx
+==================================================
+
+config main global
+	option uci_enable 'true'
+
+config server '_lan'
+	list listen '443 ssl default_server'
+	list listen '80'
+	option server_name '_lan'
+	list include 'restrict_locally'
+	list include '/soft/config/nginx.locations'
+	option uci_manage_ssl 'self-signed'
+	option ssl_certificate '/etc/nginx/conf.d/_lan.crt'
+	option ssl_certificate_key '/etc/nginx/conf.d/_lan.key'
+	option ssl_session_cache 'shared:SSL:32k'
+	option ssl_session_timeout '64m'
+
+config server '_subvendo'
+	list listen '4455 ssl default_server'
+	option server_name '_subvendo'
+	list include 'restrict_locally'
+	list include '/soft/config/subvendo.locations'
+	option uci_manage_ssl 'self-signed'
+	option ssl_certificate '/etc/nginx/conf.d/_lan.crt'
+	option ssl_certificate_key '/etc/nginx/conf.d/_lan.key'
+	option ssl_session_cache 'shared:SSL:32k'
+	option ssl_session_timeout '64m'
+config server 'redirect_pppoe'
+	list listen '8081'
+	option server_name '_pppoe'
+	list include '/soft/config/pppoe.locations'
+	
+config server 'media_server'
+	list listen '4400'
+	option server_name '_media'
+	list include '/soft/config/media.locations'
+
+==================================================
+/soft/config/nginx
+==================================================
+
+config main 'global'
+	option uci_enable 'true'
+
+config server '_lan'
+	list listen '443 ssl default_server'
+	list listen '10.0.0.1:80'
+	option server_name '_lan'
+	option uci_manage_ssl 'self-signed'
+	option ssl_certificate '/etc/nginx/conf.d/_lan.crt'
+	option ssl_certificate_key '/etc/nginx/conf.d/_lan.key'
+	option ssl_session_cache 'shared:SSL:32k'
+	option ssl_session_timeout '64m'
+	list include 'restrict_locally'
+	list include '/soft/config/nginx.locations'
+	option client_body_buffer_size     '32k'
+	option client_header_buffer_size   '8k'
+	option large_client_header_buffers '8 64k'
+
+config server '_subvendo'
+	list listen '4455 ssl default_server'
+	option server_name '_subvendo'
+	list include 'restrict_locally'
+	list include '/soft/config/subvendo.locations'
+	option uci_manage_ssl 'self-signed'
+	option ssl_certificate '/etc/nginx/conf.d/_lan.crt'
+	option ssl_certificate_key '/etc/nginx/conf.d/_lan.key'
+	option ssl_session_cache 'shared:SSL:32k'
+	option ssl_session_timeout '64m'
+config server 'redirect_pppoe'
+	list listen '11.0.0.1:80'
+	option server_name '_pppoe'
+	list include '/soft/config/pppoe.locations'
+
+config server 'media_server'
+	list listen '10.0.0.1:4400'
+	option server_name '_media'
+	list include '/soft/config/media.locations'
+
+
+==================================================
+/soft/config/admin.locations
+==================================================
+root /tmp/i/public;
+
+location ~ \.(mp3|ico|map|css|jpg|png|js|woff|woff2|ttf) {
+        limit_conn perip 10;
+        limit_req zone=ip burst=30 delay=8;
+        root /tmp/i/public;
+}
+
+location /admin {
+    limit_conn perip 10;
+    limit_req zone=ip burst=30 delay=8;
+    try_files $uri @backend;
+}
+
+location /reseller {
+    limit_conn perip 10;
+    limit_req zone=ip burst=30 delay=8;
+    try_files $uri @backend;
+}
+
+location / {
+    limit_conn perip 10;
+    limit_req zone=ip burst=30 delay=8;
+    return 302 http://$host/admin;
+}
+
+location @backend {
+    proxy_pass http://backend;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header Host $host;
+	proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+}
+
+location /tty-terminal {
+    proxy_pass http://127.0.0.1:7681/$1;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header Host $host;
+	proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+}
+==================================================
+/soft/config/nginx.locations
+==================================================
+location /files {
+	limit_conn perip 10;
+    limit_req zone=ip burst=30 delay=8;
+	autoindex_format jsonp;
+	autoindex on;
+	root /mnt/wifi5/pppoe;
+	index null;
+}
+
+location ~ ^/html/{
+        limit_conn perip 10;
+        limit_req zone=ip burst=30 delay=8;
+        root /mnt/wifi5;
+}
+
+location ~ \.(mp3|ico|map|css|jpg|png|js|woff|woff2|ttf|svg|apk) {
+        limit_conn perip 10;
+        limit_req zone=ip burst=30 delay=8;
+        root /tmp/i/public;
+}
+
+if ($request_uri ~ /admin/\?EIO ) {
+	set $sc "i";
+}
+
+if ($request_uri ~ /admin/+) { 
+  set $sc i$sc;
+}
+
+if ($sc = "i") { 
+  return 302 /admin?page=dashboard;
+}
+
+location / {
+    limit_conn perip 10;
+    limit_req zone=ip burst=30 delay=8;
+    try_files $uri @backend;
+}
+
+location @backend {
+    proxy_pass http://backend;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header Host $host;
+	proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+}
+
+location /tty-terminal {
+    proxy_pass http://127.0.0.1:7681/$1;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header Host $host;
+	proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+}
+
+error_page 502 /error.html;
+==================================================
+/soft/config/pppoe.locations
+==================================================
+root /tmp/i/public/ppoe;
+
+if ($host != "11.0.0.1" ) {
+    return 302 http://11.0.0.1/;
+}
+location ~ ^/script {
+    limit_conn perip 10;
+    limit_req zone=ip burst=30 delay=8;
+    root /tmp/i/public/pppoe-script;
+}
+location ~ \.(mp3|ico|map|css|jpg|png|js|woff|woff2|ttf) {
+    limit_conn perip 10;
+    limit_req zone=ip burst=30 delay=8;
+    root /tmp/i/public/ppoe;
+}
+
+location / {
+    root /tmp/i/public/ppoe;
+    limit_conn perip 10;
+    limit_req zone=ip burst=30 delay=8;
+    try_files $uri @backend;
+}
+
+location @backend {
+    proxy_pass http://127.0.0.1:3002;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header Host $host;
+	proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+}
+==================================================
+/soft/config/subvendo.locations
+==================================================
+location / {
+	try_files $uri @backend;
+}
+
+location @backend {
+	proxy_pass http://subvendo_backend;
+	proxy_set_header X-Real-IP $remote_addr;
+	proxy_set_header Host $host;
+	proxy_set_header X-Forwarded-Proto $scheme;
+	proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+	proxy_http_version 1.1;
+	proxy_set_header Upgrade $http_upgrade;
+	proxy_set_header Connection "upgrade";
+}
+
+==================================================
+/soft/config/media.locations
+==================================================
+location ~ \.(mp4|vtt|jpg|png) {
+	add_header "Access-Control-Allow-Origin" "*";
+    root /mnt/media;
+}

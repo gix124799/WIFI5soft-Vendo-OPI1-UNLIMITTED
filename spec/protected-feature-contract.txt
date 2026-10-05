@@ -1,0 +1,15 @@
+--- PERSISTENT PATHS ---
+/mnt/wifi5/pppoe
+
+--- ROOTFS PATHS ---
+/etc/config/pppoe
+/etc/init.d/pppoe-server
+/etc/modules.d/pppoe
+/etc/ppp/pppoe-server-options
+/etc/rc.d/K50pppoe-server
+/etc/rc.d/S50pppoe-server
+/etc/uci-defaults/pppoe-server.default
+/soft/config/pppoe
+/soft/config/pppoe.locations
+/soft/config/pppoe-server-options
+/soft/config/subvendo.locations

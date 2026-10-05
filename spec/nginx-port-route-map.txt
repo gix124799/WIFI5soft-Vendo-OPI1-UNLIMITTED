@@ -1,0 +1,60 @@
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/etc/nginx/conf.d/nginx.conf:1:limit_req_zone $binary_remote_addr zone=ip:10m rate=5r/s;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/etc/nginx/conf.d/nginx.conf:2:limit_conn_zone $binary_remote_addr zone=perip:10m;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/etc/nginx/conf.d/nginx.conf:5:    server localhost:3000 max_fails=3 fail_timeout=1s;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/etc/nginx/conf.d/nginx.conf:9:    server localhost:3001;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/etc/nginx/nginx.conf:24:	root /www;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/etc/nginx/nginx.conf:27:		listen 443 ssl default_server;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/etc/nginx/nginx.conf:28:		listen 80;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/etc/nginx/nginx.conf:34:		ssl_session_cache shared:SSL:32k;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/etc/nginx/nginx.conf:39:		listen 4455 ssl default_server;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/etc/nginx/nginx.conf:45:		ssl_session_cache shared:SSL:32k;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/etc/nginx/nginx.conf:50:		listen 8081;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/etc/nginx/nginx.conf:56:		listen 4400;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/etc/nginx/uci.conf.template:31:	root /www;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/admin.locations:1:root /tmp/i/public;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/admin.locations:3:location ~ \.(mp3|ico|map|css|jpg|png|js|woff|woff2|ttf) {
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/admin.locations:6:        root /tmp/i/public;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/admin.locations:9:location /admin {
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/admin.locations:15:location /reseller {
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/admin.locations:21:location / {
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/admin.locations:27:location @backend {
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/admin.locations:28:    proxy_pass http://backend;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/admin.locations:38:location /tty-terminal {
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/admin.locations:39:    proxy_pass http://127.0.0.1:7681/$1;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/media.locations:1:location ~ \.(mp4|vtt|jpg|png) {
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/media.locations:3:    root /mnt/media;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/nginx:6:	list listen '443 ssl default_server'
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/nginx:7:	list listen '10.0.0.1:80'
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/nginx:12:	option ssl_session_cache 'shared:SSL:32k'
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/nginx:21:	list listen '4455 ssl default_server'
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/nginx:28:	option ssl_session_cache 'shared:SSL:32k'
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/nginx:31:	list listen '11.0.0.1:80'
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/nginx:36:	list listen '10.0.0.1:4400'
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/nginx.conf:1:limit_req_zone $binary_remote_addr zone=ip:10m rate=5r/s;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/nginx.conf:2:limit_conn_zone $binary_remote_addr zone=perip:10m;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/nginx.conf:5:    server localhost:3000 max_fails=3 fail_timeout=1s;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/nginx.conf:9:    server localhost:3001;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/nginx.locations:1:location /files {
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/nginx.locations:6:	root /mnt/wifi5/pppoe;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/nginx.locations:7:	index null;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/nginx.locations:10:location ~ ^/html/{
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/nginx.locations:13:        root /mnt/wifi5;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/nginx.locations:16:location ~ \.(mp3|ico|map|css|jpg|png|js|woff|woff2|ttf|svg|apk) {
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/nginx.locations:19:        root /tmp/i/public;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/nginx.locations:34:location / {
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/nginx.locations:40:location @backend {
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/nginx.locations:41:    proxy_pass http://backend;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/nginx.locations:51:location /tty-terminal {
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/nginx.locations:52:    proxy_pass http://127.0.0.1:7681/$1;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/pppoe.locations:1:root /tmp/i/public/ppoe;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/pppoe.locations:6:location ~ ^/script {
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/pppoe.locations:9:    root /tmp/i/public/pppoe-script;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/pppoe.locations:11:location ~ \.(mp3|ico|map|css|jpg|png|js|woff|woff2|ttf) {
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/pppoe.locations:14:    root /tmp/i/public/ppoe;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/pppoe.locations:17:location / {
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/pppoe.locations:18:    root /tmp/i/public/ppoe;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/pppoe.locations:24:location @backend {
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/pppoe.locations:25:    proxy_pass http://127.0.0.1:3002;
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/subvendo.locations:1:location / {
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/subvendo.locations:5:location @backend {
+/home/ethylnet/ETHYLNET-OrangePiOne-Audit-20261005-031126/reports/step46r-replacement-interface-contract/rootfs/soft/config/subvendo.locations:6:	proxy_pass http://subvendo_backend;
