@@ -1,0 +1,11 @@
+{
+  "name": "ethyl-core",
+  "private": true,
+  "type": "commonjs",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test"
+  }
+}
