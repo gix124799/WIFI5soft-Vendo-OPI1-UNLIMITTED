@@ -124,3 +124,37 @@ test('failed migration rolls back earlier statements', async (t) => {
     []
   );
 });
+
+
+test('migrates an existing schema v1 database to v2 without losing rows', async (t) => {
+  const store = await withStore(t);
+  const { getSchemaStatementsV1 } = require('../../src/db/schema');
+
+  store.exec('BEGIN IMMEDIATE');
+  for (const sql of getSchemaStatementsV1()) store.exec(sql);
+  store.run(
+    'INSERT INTO schema_meta(key, value) VALUES (?, ?)',
+    ['schema_version', '1']
+  );
+  store.run(
+    'INSERT INTO settings(key, value_json, updated_at) VALUES (?, ?, ?)',
+    ['business.name', '"ETHYLNET"', 1]
+  );
+  store.exec('PRAGMA user_version = 1');
+  store.exec('COMMIT');
+  await store.persist();
+
+  await applyMigrations(store);
+
+  assert.equal(store.all('PRAGMA user_version')[0].user_version, 2);
+  assert.deepEqual(
+    store.all("SELECT value_json FROM settings WHERE key='business.name'"),
+    [{ value_json: '"ETHYLNET"' }]
+  );
+  for (const table of ['rental_devices', 'resellers']) {
+    assert.equal(
+      store.all("SELECT COUNT(*) AS count FROM sqlite_master WHERE type='table' AND name=?", [table])[0].count,
+      1
+    );
+  }
+});

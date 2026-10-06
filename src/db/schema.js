@@ -1,6 +1,6 @@
 'use strict';
 
-const CURRENT_SCHEMA_VERSION = 1;
+const CURRENT_SCHEMA_VERSION = 2;
 
 const SCHEMA_TABLES = Object.freeze([
   'schema_meta',
@@ -19,9 +19,11 @@ const SCHEMA_TABLES = Object.freeze([
   'provider_operations',
   'idempotency_keys',
   'audit_events',
+  'rental_devices',
+  'resellers',
 ]);
 
-const statements = Object.freeze([
+const v1Statements = Object.freeze([
   `CREATE TABLE schema_meta (
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
@@ -198,12 +200,47 @@ const statements = Object.freeze([
   'CREATE INDEX idx_provider_operations_provider ON provider_operations(provider, created_at)',
 ]);
 
+const v2MigrationStatements = Object.freeze([
+  `CREATE TABLE rental_devices (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    device_key TEXT UNIQUE,
+    state TEXT NOT NULL DEFAULT 'offline',
+    metadata_json TEXT NOT NULL DEFAULT '{}',
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  )`,
+
+  `CREATE TABLE resellers (
+    id TEXT PRIMARY KEY,
+    username TEXT NOT NULL UNIQUE,
+    display_name TEXT,
+    enabled INTEGER NOT NULL DEFAULT 1 CHECK (enabled IN (0, 1)),
+    metadata_json TEXT NOT NULL DEFAULT '{}',
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  )`,
+]);
+
+function getSchemaStatementsV1() {
+  return [...v1Statements];
+}
+
+function getMigrationStatements(fromVersion) {
+  if (fromVersion === 1) {
+    return [...v2MigrationStatements];
+  }
+  return [];
+}
+
 function getSchemaStatements() {
-  return [...statements];
+  return [...v1Statements, ...v2MigrationStatements];
 }
 
 module.exports = {
   CURRENT_SCHEMA_VERSION,
   SCHEMA_TABLES,
   getSchemaStatements,
+  getSchemaStatementsV1,
+  getMigrationStatements,
 };

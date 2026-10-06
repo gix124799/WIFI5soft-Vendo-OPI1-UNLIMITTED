@@ -3,6 +3,7 @@
 const {
   CURRENT_SCHEMA_VERSION,
   getSchemaStatements,
+  getMigrationStatements,
 } = require('./schema');
 
 function readUserVersion(store) {
@@ -71,13 +72,38 @@ async function applyMigrations(store) {
     return;
   }
 
-  if (version !== 0) {
-    throw new Error(
-      `unsupported SQLite schema migration from version ${version}`
-    );
+  if (version === 0) {
+    await migrateFromZero(store);
+    return;
   }
 
-  await migrateFromZero(store);
+  let current = version;
+  while (current < CURRENT_SCHEMA_VERSION) {
+    const statements = getMigrationStatements(current);
+    if (!Array.isArray(statements) || statements.length === 0) {
+      throw new Error(
+        `unsupported SQLite schema migration from version ${current}`
+      );
+    }
+
+    const next = current + 1;
+    store.exec('BEGIN IMMEDIATE');
+    try {
+      for (const sql of statements) store.exec(sql);
+      store.run(
+        `UPDATE schema_meta SET value = ? WHERE key = 'schema_version'`,
+        [String(next)]
+      );
+      store.exec(`PRAGMA user_version = ${next}`);
+      store.exec('COMMIT');
+    } catch (error) {
+      try { store.exec('ROLLBACK'); } catch (_rollbackError) {}
+      throw error;
+    }
+    current = next;
+  }
+
+  await store.persist();
 }
 
 module.exports = {
