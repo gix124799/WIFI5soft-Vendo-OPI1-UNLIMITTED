@@ -43,22 +43,18 @@ test('production runtime contains no legacy-core startup reference', () => {
 });
 
 test('production code does not implement product-license gates', () => {
-  const contractPath = path.join(
-    root,
-    'src',
-    'runtime',
-    'no-license-contract.js'
-  );
-
   const files = [
     ...collectJsFiles(path.join(root, 'src')),
     ...collectJsFiles(path.join(root, 'bin')),
-  ].filter((file) => file !== contractPath);
+  ];
 
   const forbidden = [
     /licenseKey/i,
+    /productKey/i,
     /activationServer/i,
-    /trialExpires/i,
+    /trial/i,
+    /trialOrExpiry/i,
+    /licenseExpiry/i,
     /boardEntitlement/i,
     /featureEntitlement/i,
     /licenseRefresh/i,
