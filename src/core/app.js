@@ -100,6 +100,7 @@ function createProductionApp(options = {}) {
   const migrate = options.migrate || require('../db/migrations').applyMigrations;
   const createHttp = options.createHttp || require('../http').createHttpLayer;
   const createDhcp = options.createDhcp || require('../network/dhcp-event-listener').createDhcpEventListener;
+  const createPppoeHttp = options.createPppoeHttp || require('../pppoe/pppoe-http-service').createPppoeHttpService;
   const createAccess = options.createAccess || defaultAccess;
   const createServices = options.createServices || defaultServices;
   const registerApi = options.registerApi || require('../api/register-local-api').registerLocalApi;
@@ -114,6 +115,7 @@ function createProductionApp(options = {}) {
   let store = null;
   let http = null;
   let dhcp = null;
+  let pppoeHttp = null;
   let access = null;
   let services = null;
 
@@ -124,8 +126,10 @@ function createProductionApp(options = {}) {
       services = createServices({ store, providerAdapters, pppoeAdapter, logger, config });
       http = createHttp({ logger });
       registerApi(http.upstream3000Router, services);
+      pppoeHttp = createPppoeHttp({ pppoe: services.pppoe, logger });
       dhcp = createDhcp({ devices: services.devices, logger });
       await dhcp.start();
+      await pppoeHttp.start();
       if (config.openwrt === true) {
         access = createAccess({ services, logger, config });
         await access.start();
@@ -137,6 +141,9 @@ function createProductionApp(options = {}) {
       if (http && typeof http.stop === 'function') {
         try { await http.stop(); } catch (_stopError) {}
       }
+      if (pppoeHttp && typeof pppoeHttp.stop === 'function') {
+        try { await pppoeHttp.stop(); } catch (_stopError) {}
+      }
       if (access && typeof access.stop === 'function') {
         try { await access.stop(); } catch (_stopError) {}
       }
@@ -147,6 +154,7 @@ function createProductionApp(options = {}) {
         try { await store.close(); } catch (_closeError) {}
       }
       http = null;
+      pppoeHttp = null;
       access = null;
       dhcp = null;
       store = null;
@@ -168,6 +176,9 @@ function createProductionApp(options = {}) {
     if (http && typeof http.stop === 'function') {
       try { await http.stop(); } catch (error) { firstError = error; }
     }
+    if (pppoeHttp && typeof pppoeHttp.stop === 'function') {
+      try { await pppoeHttp.stop(); } catch (error) { if (!firstError) firstError = error; }
+    }
     if (access && typeof access.stop === 'function') {
       try { await access.stop(); } catch (error) { if (!firstError) firstError = error; }
     }
@@ -179,6 +190,7 @@ function createProductionApp(options = {}) {
     }
     started = false;
     http = null;
+    pppoeHttp = null;
     access = null;
     dhcp = null;
     store = null;
@@ -204,6 +216,7 @@ function createProductionApp(options = {}) {
       database: 'sqlite',
       legacyCoreAllowed: false,
       http: http && typeof http.snapshot === 'function' ? http.snapshot() : null,
+      pppoe: pppoeHttp ? Object.freeze({ started: pppoeHttp.isStarted() }) : null,
     });
   }
 

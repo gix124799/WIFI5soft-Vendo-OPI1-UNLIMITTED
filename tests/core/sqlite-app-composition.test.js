@@ -23,6 +23,11 @@ function fixture() {
     async stop() { calls.push('dhcp.stop'); },
     isStarted() { return calls.includes('dhcp.start') && !calls.includes('dhcp.stop'); },
   };
+  const pppoeHttp = {
+    async start() { calls.push('pppoe-http.start'); },
+    async stop() { calls.push('pppoe-http.stop'); },
+    isStarted() { return calls.includes('pppoe-http.start') && !calls.includes('pppoe-http.stop'); },
+  };
   const http = {
     upstream3000Router: router,
     upstream3001Router: { register() {}, routeCount() { return 0; } },
@@ -47,6 +52,11 @@ function fixture() {
       calls.push('http.create');
       return http;
     },
+    createPppoeHttp: ({ pppoe }) => {
+      assert.ok(pppoe);
+      calls.push('pppoe-http.create');
+      return pppoeHttp;
+    },
     createDhcp: ({ devices }) => {
       assert.ok(devices);
       calls.push('dhcp.create');
@@ -55,7 +65,7 @@ function fixture() {
     createServices: ({ store: target }) => {
       assert.equal(target, store);
       calls.push('services.create');
-      return Object.freeze({ ready: true, devices: Object.freeze({ upsert() {} }) });
+      return Object.freeze({ ready: true, devices: Object.freeze({ upsert() {} }), pppoe: Object.freeze({ list() {} }) });
     },
     registerApi: (targetRouter, services) => {
       assert.equal(targetRouter, router);
@@ -65,7 +75,7 @@ function fixture() {
     },
   };
 
-  return { calls, store, http, dhcp, deps };
+  return { calls, store, http, pppoeHttp, dhcp, deps };
 }
 
 test('production startup initializes SQLite and API before local listeners', async () => {
@@ -79,8 +89,10 @@ test('production startup initializes SQLite and API before local listeners', asy
     'services.create',
     'http.create',
     'api.register',
+    'pppoe-http.create',
     'dhcp.create',
     'dhcp.start',
+    'pppoe-http.start',
     'http.start',
   ]);
   assert.equal(app.isStarted(), true);
@@ -106,7 +118,7 @@ test('graceful shutdown stops HTTP before closing persistent SQLite store', asyn
   await app.start();
   calls.length = 0;
   await app.stop();
-  assert.deepEqual(calls, ['http.stop', 'dhcp.stop', 'store.close']);
+  assert.deepEqual(calls, ['http.stop', 'pppoe-http.stop', 'dhcp.stop', 'store.close']);
   assert.equal(app.isStarted(), false);
 });
 
@@ -114,6 +126,7 @@ test('failed HTTP startup closes the opened store and remains stopped', async ()
   const { calls, deps, store } = fixture();
   const app = createProductionApp({
     ...deps,
+    createPppoeHttp: () => ({ async start(){}, async stop(){}, isStarted(){ return true; } }),
     createHttp: () => ({
       upstream3000Router: { register() {}, routeCount() { return 0; } },
       upstream3001Router: { register() {}, routeCount() { return 0; } },
@@ -144,6 +157,7 @@ test('default production composition includes rental and reseller local services
     config: { stateRoot: root, logLevel: 'info' },
     logger: { debug() {}, info() {}, warn() {}, error() {} },
     createHttp: () => http,
+    createPppoeHttp: ({ pppoe }) => { assert.ok(pppoe); return { async start(){}, async stop(){}, isStarted(){ return true; } }; },
   });
   await app.start();
   t.after(() => app.stop());
@@ -173,12 +187,13 @@ test('firmware mode starts and stops access reconciliation around local listener
     logger:{debug(){},info(){},warn(){},error(){}},
     openStore:async()=>store, migrate:async()=>{}, createServices:()=>services,
     createHttp:()=>http, registerApi:()=>{}, createDhcp:()=>dhcp, createAccess:()=>access,
+    createPppoeHttp:()=>({async start(){calls.push('pppoe-http.start');},async stop(){calls.push('pppoe-http.stop');},isStarted(){return true;}}),
   });
   await app.start();
-  assert.deepEqual(calls,['dhcp.start','access.start','http.start']);
+  assert.deepEqual(calls,['dhcp.start','pppoe-http.start','access.start','http.start']);
   calls.length=0;
   await app.stop();
-  assert.deepEqual(calls,['http.stop','access.stop','dhcp.stop','store.close']);
+  assert.deepEqual(calls,['http.stop','pppoe-http.stop','access.stop','dhcp.stop','store.close']);
 });
 
 test('host mode does not create OpenWrt access adapter', async () => {
@@ -202,6 +217,7 @@ test('production composition passes PPPoE mutations through supplied system adap
   const app=createProductionApp({
     config:{stateRoot:root,logLevel:'info',openwrt:false},
     logger:{debug(){},info(){},warn(){},error(){}}, createHttp:()=>http,
+    createPppoeHttp:({pppoe})=>{assert.ok(pppoe);return{async start(){},async stop(){},isStarted(){return true;}};},
     createDhcp:()=>({async start(){},async stop(){}}),
     pppoeAdapter:{async upsertAccount(account){applied.push(account.username);}},
   });
