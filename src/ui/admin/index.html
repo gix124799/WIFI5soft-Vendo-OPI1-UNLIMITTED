@@ -10,10 +10,7 @@
   <a class="skip-link" href="#content">Skip to content</a>
   <div class="app-shell">
     <aside class="sidebar" id="sidebar">
-      <div class="brand">
-        <span class="brand-mark" aria-hidden="true">E</span>
-        <div><strong>ETHYLNET</strong><span>Orange Pi One</span></div>
-      </div>
+      <div class="brand"><span class="brand-mark" aria-hidden="true">E</span><div><strong>ETHYLNET</strong><span>Orange Pi One</span></div></div>
       <nav aria-label="Admin navigation">
         <a href="?page=dashboard" data-page="dashboard">Dashboard</a>
         <a href="?page=sales" data-page="sales">Sales</a>
@@ -24,68 +21,69 @@
         <a href="?page=rental" data-page="rental">Sub-vendo / Rental</a>
         <a href="?page=settings" data-page="settings">Settings</a>
       </nav>
-      <div class="sidebar-note">Clean-room compatibility UI</div>
+      <div class="sidebar-note">Local SQLite administration</div>
     </aside>
 
     <div class="workspace">
       <header class="topbar">
         <button class="menu-button" id="menuButton" type="button" aria-controls="sidebar" aria-expanded="false">Menu</button>
-        <div>
-          <p class="eyebrow">Local administration</p>
-          <h1 id="pageTitle">Dashboard</h1>
-        </div>
-        <span class="status-pill">Backend integration pending</span>
+        <div><p class="eyebrow">Local administration</p><h1 id="pageTitle">Dashboard</h1></div>
+        <span class="status-pill" id="backendStatus">Checking local backend</span>
       </header>
 
       <main id="content" tabindex="-1">
         <section class="page" data-view="dashboard">
           <div class="hero">
-            <div><p class="eyebrow">System overview</p><h2>Control center</h2><p>Verified routing is preserved while business integrations remain isolated.</p></div>
+            <div><p class="eyebrow">System overview</p><h2>Control center</h2><p>Normal local functions use the ETHYLNET backend and persistent SQLite storage.</p></div>
             <span class="tag">NO KEY NEEDED</span>
           </div>
           <div class="card-grid">
-            <article class="card"><span>System</span><strong>Compatibility shell</strong><small>Backend integration pending</small></article>
-            <article class="card"><span>Sales</span><strong>Not connected</strong><small>Backend integration pending</small></article>
-            <article class="card"><span>Sessions</span><strong>Not connected</strong><small>Backend integration pending</small></article>
-            <article class="card"><span>Vouchers</span><strong>Not connected</strong><small>Backend integration pending</small></article>
-            <article class="card"><span>PPPoE</span><strong>Route preserved</strong><small>Backend integration pending</small></article>
-            <article class="card"><span>ELOAD</span><strong>Foundation parked</strong><small>Backend integration pending</small></article>
+            <article class="card"><span>System</span><strong id="systemValue">Checking</strong><small>Local backend</small></article>
+            <article class="card"><span>Sales</span><strong id="salesValue">Checking</strong><small>Persistent records</small></article>
+            <article class="card"><span>Sessions</span><strong id="sessionsValue">Checking</strong><small>Persistent customer time</small></article>
+            <article class="card"><span>Vouchers</span><strong id="vouchersValue">Checking</strong><small>Persistent voucher state</small></article>
+            <article class="card"><span>PPPoE</span><strong id="pppoeValue">Checking</strong><small>Local account state</small></article>
+            <article class="card"><span>ELOAD / ePay</span><strong id="providerValue">Checking</strong><small>Optional external provider only</small></article>
           </div>
         </section>
 
         <section class="page" data-view="sales" hidden>
-          <div class="section-head"><div><p class="eyebrow">Business</p><h2>Sales</h2></div><label>Date range <input type="date" disabled></label></div>
-          <div class="panel"><p class="empty-state">No verified sales backend is connected. Backend integration pending.</p></div>
+          <div class="section-head"><div><p class="eyebrow">Business</p><h2>Sales</h2></div></div>
+          <div class="panel"><p class="empty-state" id="salesState">Loading local sales data.</p></div>
         </section>
 
         <section class="page" data-view="sessions" hidden>
           <div class="section-head"><div><p class="eyebrow">Customers</p><h2>Sessions</h2></div></div>
-          <div class="panel table-wrap"><table><thead><tr><th>Device</th><th>Status</th><th>Time</th></tr></thead><tbody><tr><td colspan="3">Backend integration pending</td></tr></tbody></table></div>
+          <div class="panel table-wrap"><table><thead><tr><th>Device</th><th>Status</th><th>Time</th></tr></thead><tbody id="sessionsRows"><tr><td colspan="3">Loading local sessions.</td></tr></tbody></table></div>
         </section>
 
         <section class="page" data-view="vouchers" hidden>
-          <div class="section-head"><div><p class="eyebrow">Access</p><h2>Vouchers</h2></div><button type="button" disabled>Create voucher</button></div>
-          <div class="panel"><p class="empty-state">Voucher creation is disabled until its backend contract is verified.</p></div>
+          <div class="section-head"><div><p class="eyebrow">Access</p><h2>Vouchers</h2></div></div>
+          <div class="panel"><p class="empty-state" id="vouchersState">Loading local voucher data.</p></div>
         </section>
 
         <section class="page" data-view="pppoe" hidden>
           <div class="section-head"><div><p class="eyebrow">Network</p><h2>PPPoE</h2></div></div>
-          <div class="panel"><p>Verified local backend ownership remains reserved. Backend integration pending.</p><button type="button" disabled>Apply changes</button></div>
+          <div class="panel"><p id="pppoeState">Loading local PPPoE account state.</p></div>
         </section>
 
         <section class="page" data-view="eload" hidden>
           <div class="section-head"><div><p class="eyebrow">Services</p><h2>ELOAD</h2></div></div>
-          <div class="panel"><p>No provider products or balances are fabricated. Backend integration pending.</p><button type="button" disabled>Apply order</button></div>
+          <div class="panel"><p id="eloadState">Provider status is unavailable until a provider is configured.</p><button type="button" disabled>Apply order</button></div>
         </section>
 
         <section class="page" data-view="rental" hidden>
           <div class="section-head"><div><p class="eyebrow">Devices</p><h2>Sub-vendo / Rental</h2></div></div>
-          <div class="panel"><p>Device control remains unavailable until its contract is implemented. Backend integration pending.</p></div>
+          <div class="panel"><p>Rental control remains isolated until its local device adapter is implemented.</p></div>
         </section>
 
         <section class="page" data-view="settings" hidden>
           <div class="section-head"><div><p class="eyebrow">Configuration</p><h2>Settings</h2></div></div>
-          <div class="panel form-grid"><label>Business name <input type="text" value="ETHYLNET" disabled></label><button type="button" disabled>Save settings</button></div>
+          <div class="panel form-grid">
+            <label>Business name <input id="businessName" type="text" value="ETHYLNET" autocomplete="organization"></label>
+            <button id="saveSettings" type="button">Save settings</button>
+            <small id="settingsState">Stored locally in SQLite.</small>
+          </div>
         </section>
       </main>
     </div>

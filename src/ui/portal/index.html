@@ -9,58 +9,51 @@
 <body>
   <header class="site-header">
     <div class="brand"><span class="brand-mark" aria-hidden="true">E</span><div><strong>ETHYLNET</strong><small>WiFi access</small></div></div>
-    <span class="status-badge">Backend integration pending</span>
+    <span class="status-badge" id="portalStatus">Checking local backend</span>
   </header>
-
   <main>
     <section class="hero" aria-labelledby="welcomeTitle">
       <p class="eyebrow">Fast local access</p>
       <h1 id="welcomeTitle">Connect to ETHYLNET WiFi</h1>
-      <p class="lead">This clean-room portal preserves the customer entry surface while verified session and payment integrations are still being added.</p>
+      <p class="lead">Normal portal data is served by the local ETHYLNET backend and persistent SQLite storage.</p>
       <button type="button" disabled>Connect</button>
     </section>
-
     <section class="grid" aria-label="Portal information">
       <article class="card">
         <p class="eyebrow">Connection status</p>
-        <h2>Not yet connected to session backend</h2>
-        <p>Backend integration pending</p>
+        <h2 id="connectionTitle">Local backend status unavailable</h2>
+        <p id="connectionDetail">Unavailable until the local backend responds.</p>
         <dl>
           <div><dt>Remaining time</dt><dd>Unavailable</dd></div>
           <div><dt>Balance</dt><dd>Unavailable</dd></div>
           <div><dt>Device</dt><dd>Unavailable</dd></div>
         </dl>
       </article>
-
       <article class="card">
         <p class="eyebrow">Rates and access</p>
         <h2>Service information</h2>
-        <p>Verified rate data has not been connected yet. No prices are fabricated.</p>
+        <p id="ratesText">Loading local rates.</p>
         <button type="button" disabled>Start access</button>
       </article>
-
       <article class="card">
         <p class="eyebrow">Voucher</p>
         <h2>Redeem a code</h2>
         <label for="voucherCode">Voucher code</label>
-        <input id="voucherCode" type="text" autocomplete="off" disabled placeholder="Backend integration pending">
+        <input id="voucherCode" type="text" autocomplete="off" disabled placeholder="Session binding unavailable">
         <button type="button" disabled>Voucher submit</button>
       </article>
-
       <article class="card">
         <p class="eyebrow">Payment</p>
         <h2>Add access</h2>
-        <p>Payment actions remain disabled until the payment contract is implemented.</p>
+        <p>Provider payments remain optional and unavailable unless a provider adapter is configured.</p>
         <button type="button" disabled>Pay</button>
       </article>
     </section>
-
     <section class="notice" aria-label="Compatibility notice">
       <strong>Local compatibility mode</strong>
-      <p>Customer-facing data is shown only when verified backend integrations provide it.</p>
+      <p>Local features do not require WAN access. Provider-only operations degrade independently.</p>
     </section>
   </main>
-
   <footer>Made by ETHYLNET</footer>
   <script src="portal.js" defer></script>
 </body>
