@@ -18,7 +18,7 @@ test('Node runtime major version is at least 18', () => {
   );
 });
 
-test('package contract exists and uses CommonJS without production dependencies', () => {
+test('package contract is CommonJS with only the pinned SQLite runtime dependency', () => {
   assert.ok(
     fs.existsSync(packagePath),
     'package.json must exist'
@@ -34,11 +34,9 @@ test('package contract exists and uses CommonJS without production dependencies'
   assert.equal(pkg.engines.node, '>=18');
   assert.equal(pkg.scripts.test, 'node --test');
 
-  assert.ok(
-    !Object.prototype.hasOwnProperty.call(pkg, 'dependencies') ||
-      Object.keys(pkg.dependencies).length === 0,
-    'foundation must have no production dependencies'
-  );
+  assert.deepEqual(pkg.dependencies, {
+    'sql.js': '1.14.2'
+  });
 });
 
 test('foundation executable entrypoint exists', () => {

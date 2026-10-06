@@ -1,0 +1,6 @@
+require-chap
+lcp-echo-interval 10
+lcp-echo-failure 2
+mru 1492
+mtu 1492
+ms-dns 10.0.0.1

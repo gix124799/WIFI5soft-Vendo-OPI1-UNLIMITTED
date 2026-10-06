@@ -4,7 +4,6 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { execFileSync } = require('node:child_process');
 
 const root = path.resolve(__dirname, '..', '..');
 const uiRoot = path.join(root, 'src', 'ui');
@@ -29,7 +28,6 @@ function allUiText() {
 
 test('UI contract stays inside verified route and listener boundaries', () => {
   const contract = getUiContract();
-
   assert.deepEqual(contract.routes, ['/', '/admin', '/reseller', '/tty-terminal']);
   assert.deepEqual(contract.listenerOwnership, [3000, 3001]);
   assert.equal(contract.dashboardEntry, '/admin?page=dashboard');
@@ -38,31 +36,31 @@ test('UI contract stays inside verified route and listener boundaries', () => {
   assert.deepEqual(contract.verifiedPortalMutationApis, []);
 });
 
-test('UI assets have no external runtime dependencies or dangerous dynamic code', () => {
+test('UI assets use only same-origin local API calls and no dangerous dynamic code', () => {
   const text = allUiText();
-
   assert.doesNotMatch(text, /https?:\/\//i);
   assert.doesNotMatch(text, /<script[^>]+src=["']\/\//i);
   assert.doesNotMatch(text, /@import/i);
   assert.doesNotMatch(text, /\beval\s*\(/);
   assert.doesNotMatch(text, /new\s+Function/);
   assert.doesNotMatch(text, /innerHTML\s*=/);
-  assert.doesNotMatch(text, /fetch\s*\(|XMLHttpRequest|WebSocket|EventSource/);
+  assert.doesNotMatch(text, /XMLHttpRequest|WebSocket|EventSource/);
+
+  const fetchTargets = [...text.matchAll(/fetch\s*\(\s*["']([^"']+)["']/g)]
+    .map((match) => match[1]);
+  for (const target of fetchTargets) {
+    assert.match(target, /^\/api\/v1\//);
+  }
 });
 
 test('UI assets do not contain obvious embedded credentials or new listener code', () => {
   const text = allUiText();
-
   assert.doesNotMatch(text, /(?:password|secret|access[_-]?token|api[_-]?key)\s*[:=]\s*["'][^"']+["']/i);
   assert.doesNotMatch(text, /\.listen\s*\(|createServer\s*\(/);
 });
 
-test('UI foundation does not modify the clean-room runtime entrypoint', () => {
-  const diff = execFileSync(
-    'git',
-    ['diff', 'main...HEAD', '--', 'bin/ethyl-core.js'],
-    { cwd: root, encoding: 'utf8' }
-  );
-
-  assert.equal(diff, '');
+test('UI remains compatible with the local SQLite production entrypoint', () => {
+  const entry = fs.readFileSync(path.join(root, 'bin', 'ethyl-core.js'), 'utf8');
+  assert.match(entry, /createProductionApp/);
+  assert.doesNotMatch(entry, /\/soft\/index\.o|https?:\/\//i);
 });

@@ -1,0 +1,2 @@
+meta iifname "br-lan" ether saddr @ethyl_authorized_macs accept
+meta iifname "br-lan" counter drop

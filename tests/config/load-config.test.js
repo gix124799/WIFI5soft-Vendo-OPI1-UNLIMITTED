@@ -31,7 +31,8 @@ test('uses /mnt/wifi5 and info when overrides are absent', () => {
 
   assert.deepEqual(config, {
     stateRoot: '/mnt/wifi5',
-    logLevel: 'info'
+    logLevel: 'info',
+    openwrt: false
   });
 });
 
@@ -132,4 +133,12 @@ test('relative state-root rejection occurs without creating the path', () => {
   );
 
   assert.equal(fs.existsSync(resolved), false);
+});
+
+
+test('OpenWrt mode is explicit and rejects ambiguous values', () => {
+  const { loadConfig } = loadSubject();
+  assert.equal(loadConfig({ ETHYL_OPENWRT: '1' }).openwrt, true);
+  assert.equal(loadConfig({ ETHYL_OPENWRT: '0' }).openwrt, false);
+  assert.throws(() => loadConfig({ ETHYL_OPENWRT: 'yes' }), /OpenWrt|ETHYL_OPENWRT|invalid/i);
 });
