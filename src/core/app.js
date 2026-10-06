@@ -87,6 +87,7 @@ function createProductionApp(options = {}) {
   const openStore = options.openStore || require('../db/sqlite-store').openSqliteStore;
   const migrate = options.migrate || require('../db/migrations').applyMigrations;
   const createHttp = options.createHttp || require('../http').createHttpLayer;
+  const createDhcp = options.createDhcp || require('../network/dhcp-event-listener').createDhcpEventListener;
   const createServices = options.createServices || defaultServices;
   const registerApi = options.registerApi || require('../api/register-local-api').registerLocalApi;
   const providerAdapters = options.providerAdapters || {};
@@ -96,6 +97,7 @@ function createProductionApp(options = {}) {
   let stopping = null;
   let store = null;
   let http = null;
+  let dhcp = null;
   let services = null;
 
   async function startTransaction() {
@@ -105,6 +107,8 @@ function createProductionApp(options = {}) {
       services = createServices({ store, providerAdapters, logger, config });
       http = createHttp({ logger });
       registerApi(http.upstream3000Router, services);
+      dhcp = createDhcp({ devices: services.devices, logger });
+      await dhcp.start();
       await http.start();
       started = true;
     } catch (error) {
@@ -112,10 +116,14 @@ function createProductionApp(options = {}) {
       if (http && typeof http.stop === 'function') {
         try { await http.stop(); } catch (_stopError) {}
       }
+      if (dhcp && typeof dhcp.stop === 'function') {
+        try { await dhcp.stop(); } catch (_stopError) {}
+      }
       if (store && typeof store.close === 'function') {
         try { await store.close(); } catch (_closeError) {}
       }
       http = null;
+      dhcp = null;
       store = null;
       services = null;
       throw error;
@@ -135,11 +143,15 @@ function createProductionApp(options = {}) {
     if (http && typeof http.stop === 'function') {
       try { await http.stop(); } catch (error) { firstError = error; }
     }
+    if (dhcp && typeof dhcp.stop === 'function') {
+      try { await dhcp.stop(); } catch (error) { if (!firstError) firstError = error; }
+    }
     if (store && typeof store.close === 'function') {
       try { await store.close(); } catch (error) { if (!firstError) firstError = error; }
     }
     started = false;
     http = null;
+    dhcp = null;
     store = null;
     services = null;
     if (firstError) throw firstError;

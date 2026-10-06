@@ -18,6 +18,11 @@ function fixture() {
     register() {},
     routeCount() { return 0; },
   };
+  const dhcp = {
+    async start() { calls.push('dhcp.start'); },
+    async stop() { calls.push('dhcp.stop'); },
+    isStarted() { return calls.includes('dhcp.start') && !calls.includes('dhcp.stop'); },
+  };
   const http = {
     upstream3000Router: router,
     upstream3001Router: { register() {}, routeCount() { return 0; } },
@@ -42,10 +47,15 @@ function fixture() {
       calls.push('http.create');
       return http;
     },
+    createDhcp: ({ devices }) => {
+      assert.ok(devices);
+      calls.push('dhcp.create');
+      return dhcp;
+    },
     createServices: ({ store: target }) => {
       assert.equal(target, store);
       calls.push('services.create');
-      return Object.freeze({ ready: true });
+      return Object.freeze({ ready: true, devices: Object.freeze({ upsert() {} }) });
     },
     registerApi: (targetRouter, services) => {
       assert.equal(targetRouter, router);
@@ -55,7 +65,7 @@ function fixture() {
     },
   };
 
-  return { calls, store, http, deps };
+  return { calls, store, http, dhcp, deps };
 }
 
 test('production startup initializes SQLite and API before local listeners', async () => {
@@ -69,6 +79,8 @@ test('production startup initializes SQLite and API before local listeners', asy
     'services.create',
     'http.create',
     'api.register',
+    'dhcp.create',
+    'dhcp.start',
     'http.start',
   ]);
   assert.equal(app.isStarted(), true);
@@ -94,7 +106,7 @@ test('graceful shutdown stops HTTP before closing persistent SQLite store', asyn
   await app.start();
   calls.length = 0;
   await app.stop();
-  assert.deepEqual(calls, ['http.stop', 'store.close']);
+  assert.deepEqual(calls, ['http.stop', 'dhcp.stop', 'store.close']);
   assert.equal(app.isStarted(), false);
 });
 
