@@ -83,7 +83,7 @@ test('runner disables PRoot seccomp acceleration for the proven qemu-arm compati
 test('runner allows measured ARM startup latency while retaining a finite outer timeout', async () => {
   const text = await fsp.readFile(runner, 'utf8');
   assert.match(text, /while \[ "\$attempt" -lt 300 \]/);
-  assert.match(text, /timeout 90 bwrap/);
+  assert.match(text, /timeout 240 bwrap/);
 });
 
 test('runner disables adaptive V8 optimization only for ARM emulation stability', async () => {
@@ -96,4 +96,14 @@ test('runner launches the emulator in its own session and terminates the whole p
   assert.match(text, /setsid\s+env[\s\S]*proot/);
   assert.match(text, /kill\s+-TERM\s+--\s+"-\$BACKEND_PID"/);
   assert.match(text, /kill\s+-KILL\s+--\s+"-\$BACKEND_PID"/);
+});
+
+test('runner retries only QEMU-internal SIGSEGV startup failures and caps retries', async () => {
+  const text = await fsp.readFile(runner, 'utf8');
+  assert.match(text, /QEMU internal SIGSEGV/);
+  assert.match(text, /MAX_QEMU_START_ATTEMPTS=3/);
+  assert.match(text, /start_backend_with_qemu_retry/);
+  assert.match(text, /grep\s+-q\s+['"]QEMU internal SIGSEGV['"]/);
+  assert.match(text, /QEMU_INTERNAL_RETRIES=/);
+  assert.doesNotMatch(text, /retry[^\n]*(?:application|health|sqlite|settings)/i);
 });

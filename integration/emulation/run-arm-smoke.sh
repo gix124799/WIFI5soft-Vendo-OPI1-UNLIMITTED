@@ -34,6 +34,8 @@ set -eu
 ROOTFS=$1
 STATE_ROOT=$2
 BACKEND_PID=''
+MAX_QEMU_START_ATTEMPTS=3
+QEMU_INTERNAL_RETRIES=0
 
 cleanup() {
     if [ -n "$BACKEND_PID" ]; then
@@ -84,8 +86,29 @@ stop_backend() {
     BACKEND_PID=''
 }
 
-start_backend "$STATE_ROOT/backend-1.log"
-if ! wait_health; then
+start_backend_with_qemu_retry() {
+    log_file=$1
+    qemu_attempt=1
+    while [ "$qemu_attempt" -le "$MAX_QEMU_START_ATTEMPTS" ]; do
+        : > "$log_file"
+        start_backend "$log_file"
+        if wait_health; then
+            return 0
+        fi
+        stop_backend
+        if grep -q 'QEMU internal SIGSEGV' "$log_file" && [ "$qemu_attempt" -lt "$MAX_QEMU_START_ATTEMPTS" ]; then
+            QEMU_INTERNAL_RETRIES=$((QEMU_INTERNAL_RETRIES + 1))
+            echo "QEMU internal startup crash; retrying ($qemu_attempt/$MAX_QEMU_START_ATTEMPTS)" >&2
+            qemu_attempt=$((qemu_attempt + 1))
+            sleep 0.2
+            continue
+        fi
+        return 1
+    done
+    return 1
+}
+
+if ! start_backend_with_qemu_retry "$STATE_ROOT/backend-1.log"; then
     cat "$STATE_ROOT/backend-1.log" >&2 || true
     echo 'ARM target backend did not become healthy' >&2
     exit 1
@@ -111,8 +134,7 @@ curl -fsS --max-time 2 \
 grep -q '"ok":true' "$STATE_ROOT/setting-write.json"
 
 stop_backend
-start_backend "$STATE_ROOT/backend-2.log"
-if ! wait_health; then
+if ! start_backend_with_qemu_retry "$STATE_ROOT/backend-2.log"; then
     cat "$STATE_ROOT/backend-2.log" >&2 || true
     echo 'ARM target backend did not restart cleanly' >&2
     exit 1
@@ -121,6 +143,7 @@ curl -fsS --max-time 2 http://127.0.0.1:3000/api/v1/settings > "$STATE_ROOT/sett
 grep -q '"key":"smoke.arm"' "$STATE_ROOT/settings-after-restart.json"
 grep -q '"value":"persisted"' "$STATE_ROOT/settings-after-restart.json"
 echo 'RESTART_PERSISTENCE=PASS'
+echo "QEMU_INTERNAL_RETRIES=$QEMU_INTERNAL_RETRIES"
 stop_backend
 trap - EXIT INT TERM
 INNER_EOF
@@ -128,7 +151,7 @@ chmod 700 "$INNER"
 
 # One writable host path is exposed: STATE_ROOT. Everything else is read-only,
 # and --unshare-net leaves only loopback available to the smoke process.
-timeout 90 bwrap \
+timeout 240 bwrap \
     --unshare-net \
     --ro-bind / / \
     --proc /proc \
