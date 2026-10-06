@@ -1,6 +1,6 @@
 'use strict';
 
-const CURRENT_SCHEMA_VERSION = 2;
+const CURRENT_SCHEMA_VERSION = 3;
 
 const SCHEMA_TABLES = Object.freeze([
   'schema_meta',
@@ -222,19 +222,28 @@ const v2MigrationStatements = Object.freeze([
   )`,
 ]);
 
+const v3MigrationStatements = Object.freeze([
+  'ALTER TABLE sessions ADD COLUMN expires_at INTEGER',
+  `UPDATE sessions
+   SET expires_at = CASE
+     WHEN state = 'active' AND remaining_seconds > 0
+       THEN updated_at + (remaining_seconds * 1000)
+     ELSE NULL
+   END`,
+]);
+
 function getSchemaStatementsV1() {
   return [...v1Statements];
 }
 
 function getMigrationStatements(fromVersion) {
-  if (fromVersion === 1) {
-    return [...v2MigrationStatements];
-  }
+  if (fromVersion === 1) return [...v2MigrationStatements];
+  if (fromVersion === 2) return [...v3MigrationStatements];
   return [];
 }
 
 function getSchemaStatements() {
-  return [...v1Statements, ...v2MigrationStatements];
+  return [...v1Statements, ...v2MigrationStatements, ...v3MigrationStatements];
 }
 
 module.exports = {

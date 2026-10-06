@@ -126,7 +126,7 @@ test('failed migration rolls back earlier statements', async (t) => {
 });
 
 
-test('migrates an existing schema v1 database to v2 without losing rows', async (t) => {
+test('migrates an existing schema v1 database through current version without losing rows', async (t) => {
   const store = await withStore(t);
   const { getSchemaStatementsV1 } = require('../../src/db/schema');
 
@@ -146,7 +146,7 @@ test('migrates an existing schema v1 database to v2 without losing rows', async 
 
   await applyMigrations(store);
 
-  assert.equal(store.all('PRAGMA user_version')[0].user_version, 2);
+  assert.equal(store.all('PRAGMA user_version')[0].user_version, CURRENT_SCHEMA_VERSION);
   assert.deepEqual(
     store.all("SELECT value_json FROM settings WHERE key='business.name'"),
     [{ value_json: '"ETHYLNET"' }]
@@ -157,4 +157,22 @@ test('migrates an existing schema v1 database to v2 without losing rows', async 
       1
     );
   }
+});
+
+
+test('migrates v2 sessions to v3 expiry without losing credited time', async (t) => {
+  const store = await withStore(t);
+  const { getSchemaStatementsV1, getMigrationStatements } = require('../../src/db/schema');
+  store.exec('BEGIN IMMEDIATE');
+  for (const sql of getSchemaStatementsV1()) store.exec(sql);
+  for (const sql of getMigrationStatements(1)) store.exec(sql);
+  store.run("INSERT INTO schema_meta(key, value) VALUES ('schema_version', '2')");
+  store.run('INSERT INTO devices(id, mac, name, metadata_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)', ['d1','aa:bb:cc:dd:ee:01',null,'{}',1000,1000]);
+  store.run('INSERT INTO sessions(id, device_id, user_id, remaining_seconds, state, created_at, updated_at) VALUES (?, ?, NULL, ?, ?, ?, ?)', ['s1','d1',120,'active',1000,5000]);
+  store.exec('PRAGMA user_version = 2');
+  store.exec('COMMIT');
+  await store.persist();
+  await applyMigrations(store);
+  assert.equal(store.all('PRAGMA user_version')[0].user_version, 3);
+  assert.deepEqual(store.all('SELECT remaining_seconds, expires_at FROM sessions WHERE id=?', ['s1']), [{ remaining_seconds:120, expires_at:125000 }]);
 });

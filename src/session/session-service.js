@@ -19,17 +19,21 @@ function assertInitialSeconds(value) {
   return value;
 }
 
-function mapSession(row) {
-  if (!row) {
-    return undefined;
+function effectiveSession(row, timestamp) {
+  if (!row) return undefined;
+  let remainingSeconds = row.remaining_seconds;
+  let state = row.state;
+  if (state === 'active' && row.expires_at !== null && row.expires_at !== undefined) {
+    remainingSeconds = Math.max(0, Math.ceil((row.expires_at - timestamp) / 1000));
+    if (remainingSeconds === 0) state = 'exhausted';
   }
-
   return Object.freeze({
     id: row.id,
     deviceId: row.device_id,
     userId: row.user_id,
-    remainingSeconds: row.remaining_seconds,
-    state: row.state,
+    remainingSeconds,
+    state,
+    expiresAt: row.expires_at ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   });
@@ -49,15 +53,17 @@ function createSessionService(options = {}) {
       throw new TypeError('session id must be a non-empty string');
     }
 
-    return mapSession(
-      store.all('SELECT * FROM sessions WHERE id = ?', [id])[0]
+    return effectiveSession(
+      store.all('SELECT * FROM sessions WHERE id = ?', [id])[0],
+      now()
     );
   }
 
   function list() {
+    const timestamp = now();
     return store.all(
       'SELECT * FROM sessions ORDER BY created_at, id'
-    ).map(mapSession);
+    ).map((row) => effectiveSession(row, timestamp));
   }
 
   async function create(input = {}) {
@@ -84,8 +90,8 @@ function createSessionService(options = {}) {
     await withTransaction(store, async (tx) => {
       tx.run(
         `INSERT INTO sessions(
-           id, device_id, user_id, remaining_seconds, state, created_at, updated_at
-         ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+           id, device_id, user_id, remaining_seconds, state, created_at, updated_at, expires_at
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
           input.deviceId,
@@ -94,6 +100,7 @@ function createSessionService(options = {}) {
           'active',
           timestamp,
           timestamp,
+          initialSeconds > 0 ? timestamp + (initialSeconds * 1000) : null,
         ]
       );
 
@@ -168,32 +175,33 @@ function createSessionService(options = {}) {
         throw new Error('session not found');
       }
 
+      const effective = effectiveSession(row, timestamp);
       let nextSeconds;
       let delta;
       let nextState;
       let kind;
 
       if (direction === 'add') {
-        nextSeconds = row.remaining_seconds + amount;
+        nextSeconds = effective.remainingSeconds + amount;
         delta = amount;
         nextState = 'active';
         kind = 'session_time_credit';
       } else {
-        if (row.remaining_seconds < amount) {
+        if (effective.remainingSeconds < amount) {
           throw new Error('insufficient remaining session time');
         }
-
-        nextSeconds = row.remaining_seconds - amount;
+        nextSeconds = effective.remainingSeconds - amount;
         delta = -amount;
-        nextState = nextSeconds === 0 ? 'exhausted' : row.state;
+        nextState = nextSeconds === 0 ? 'exhausted' : 'active';
         kind = 'session_time_debit';
       }
 
+      const expiresAt = nextSeconds > 0 ? timestamp + (nextSeconds * 1000) : null;
       tx.run(
         `UPDATE sessions
-         SET remaining_seconds = ?, state = ?, updated_at = ?
+         SET remaining_seconds = ?, state = ?, updated_at = ?, expires_at = ?
          WHERE id = ?`,
-        [nextSeconds, nextState, timestamp, sessionId]
+        [nextSeconds, nextState, timestamp, expiresAt, sessionId]
       );
 
       tx.run(

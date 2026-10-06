@@ -33,7 +33,7 @@ async function seedDevice(store) {
   await devices.upsert({ mac: 'aa:bb:cc:dd:ee:01', name: 'Client' });
 }
 
-test('session time changes only through explicit add and consume events', async (t) => {
+test('session credits and explicit debits remain transactional', async (t) => {
   const root = await readyRoot(t);
   const store = await openReady(root);
   t.after(() => store.close());
@@ -166,9 +166,58 @@ test('session and credited time survive database restart exactly', async (t) => 
 
   const secondStore = await openReady(root);
   t.after(() => secondStore.close());
-  const second = createSessionService({ store: secondStore });
+  const second = createSessionService({ store: secondStore, now: () => 4000 });
 
   const reopened = second.get(session.id);
   assert.equal(reopened.remainingSeconds, 600);
   assert.equal(reopened.state, 'active');
+});
+
+
+test('remaining time decreases from persisted absolute expiry without per-second writes', async (t) => {
+  const root = await readyRoot(t);
+  const store = await openReady(root);
+  t.after(() => store.close());
+  await seedDevice(store);
+  let clock = 10000;
+  let n = 0;
+  const service = createSessionService({ store, now: () => clock, createIdFn: p => `${p}_${++n}` });
+  const session = await service.create({ deviceId: 'device_1', initialSeconds: 120 });
+  assert.equal(session.remainingSeconds, 120);
+  clock += 30000;
+  assert.equal(service.get(session.id).remainingSeconds, 90);
+  clock += 90000;
+  const expired = service.get(session.id);
+  assert.equal(expired.remainingSeconds, 0);
+  assert.equal(expired.state, 'exhausted');
+  assert.equal(store.all('SELECT remaining_seconds FROM sessions WHERE id=?', [session.id])[0].remaining_seconds, 120);
+});
+
+test('absolute expiry continues countdown across database restart', async (t) => {
+  const root = await readyRoot(t);
+  let clock = 100000;
+  const firstStore = await openReady(root);
+  await seedDevice(firstStore);
+  let n = 0;
+  const first = createSessionService({ store:firstStore, now:() => clock, createIdFn:p => `${p}_${++n}` });
+  const session = await first.create({ deviceId:'device_1', initialSeconds:600 });
+  await firstStore.close();
+  clock += 120000;
+  const secondStore = await openReady(root);
+  t.after(() => secondStore.close());
+  const second = createSessionService({ store:secondStore, now:() => clock });
+  assert.equal(second.get(session.id).remainingSeconds, 480);
+});
+
+test('adding time after elapsed time extends from effective remaining time', async (t) => {
+  const root = await readyRoot(t);
+  const store = await openReady(root);
+  t.after(() => store.close());
+  await seedDevice(store);
+  let clock = 1000; let n=0;
+  const service=createSessionService({store,now:()=>clock,createIdFn:p=>`${p}_${++n}`});
+  const session=await service.create({deviceId:'device_1',initialSeconds:60});
+  clock += 30000;
+  const credited=await service.addTime({sessionId:session.id,seconds:60,idempotencyKey:'elapsed:add:1'});
+  assert.equal(credited.remainingSeconds,90);
 });

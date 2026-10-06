@@ -10,8 +10,8 @@ const {
   getMigrationStatements,
 } = require('../../src/db/schema');
 
-test('declares schema version 2 and every approved persistent table', () => {
-  assert.equal(CURRENT_SCHEMA_VERSION, 2);
+test('declares schema version 3 and every approved persistent table', () => {
+  assert.equal(CURRENT_SCHEMA_VERSION, 3);
 
   assert.deepEqual(
     [...SCHEMA_TABLES],
@@ -44,6 +44,13 @@ test('schema v1 to v2 migration adds rental and reseller tables only', () => {
   assert.match(sql, /CREATE TABLE rental_devices/i);
   assert.match(sql, /CREATE TABLE resellers/i);
   assert.doesNotMatch(sql, /CREATE TABLE settings/i);
+});
+
+test('schema v2 to v3 migration adds session expiry clock only', () => {
+  const sql = getMigrationStatements(2).join('\n');
+  assert.match(sql, /ALTER TABLE sessions ADD COLUMN expires_at/i);
+  assert.match(sql, /UPDATE sessions\s+SET expires_at/i);
+  assert.doesNotMatch(sql, /CREATE TABLE/i);
 });
 
 test('schema statements contain no product licensing tables or fields', () => {
