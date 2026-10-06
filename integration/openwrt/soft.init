@@ -4,9 +4,76 @@ START=95
 STOP=10
 USE_PROCD=1
 
+BOOTSTRAP=${ETHYL_LAUNCHER_BOOTSTRAP:-/usr/libexec/ethyl/wifi5-storage-bootstrap.sh}
+REBOOT_BIN=${ETHYL_LAUNCHER_REBOOT:-/sbin/reboot}
+NODE_BIN=${ETHYL_LAUNCHER_NODE:-/usr/bin/node}
+ENTRYPOINT=${ETHYL_LAUNCHER_ENTRYPOINT:-/soft/ethyl-core/bin/ethyl-core.js}
+STATE_ROOT=${ETHYL_LAUNCHER_STATE_ROOT:-/mnt/wifi5}
+PROC_MOUNTS=${ETHYL_LAUNCHER_PROC_MOUNTS:-/proc/mounts}
+
+log_msg() {
+    logger -t ethyl-core -- "$*" 2>/dev/null || true
+}
+
+is_mounted() {
+    awk -v m="$STATE_ROOT" '$2 == m { found=1 } END { exit(found ? 0 : 1) }' "$PROC_MOUNTS"
+}
+
+is_port_busy() {
+    port=$1
+    netstat -ltn 2>/dev/null | awk -v suffix=":$port" '
+         $4 ~ (suffix "$") { found=1 }
+        END { exit(found ? 0 : 1) }
+    '
+}
+
 start_service() {
+    "$BOOTSTRAP"
+    bootstrap_rc=$?
+    case "$bootstrap_rc" in
+        0)
+            ;;
+        75)
+            log_msg 'WiFi5 partition created; requesting one controlled reboot'
+            "$REBOOT_BIN"
+            return 0
+            ;;
+        *)
+            log_msg "WiFi5 storage bootstrap failed with status $bootstrap_rc"
+            return "$bootstrap_rc"
+            ;;
+    esac
+
+    if ! is_mounted; then
+        log_msg "state root is not mounted: $STATE_ROOT"
+        return 1
+    fi
+
+    probe="$STATE_ROOT/.ethyl-launcher-probe.$$"
+    if ! (umask 077; : > "$probe"); then
+        log_msg "state root is not writable: $STATE_ROOT"
+        return 1
+    fi
+    rm -f "$probe"
+
+    if [ ! -x "$NODE_BIN" ]; then
+        log_msg "Node runtime missing or not executable: $NODE_BIN"
+        return 1
+    fi
+    if [ ! -f "$ENTRYPOINT" ]; then
+        log_msg "ETHYLNET entrypoint missing: $ENTRYPOINT"
+        return 1
+    fi
+
+    for port in 3000 3001 3002; do
+        if is_port_busy "$port"; then
+            log_msg "required local port already in use: $port"
+            return 1
+        fi
+    done
+
     procd_open_instance
-    procd_set_param command /usr/bin/node /soft/ethyl-core/bin/ethyl-core.js
+    procd_set_param command "$NODE_BIN" "$ENTRYPOINT"
     procd_set_param env ETHYL_STATE_ROOT=/mnt/wifi5 ETHYL_LOG_LEVEL=info ETHYL_OPENWRT=1
     procd_set_param respawn 3600 5 5
     procd_set_param stdout 1

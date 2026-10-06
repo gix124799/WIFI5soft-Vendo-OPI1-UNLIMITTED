@@ -41,7 +41,8 @@ test('staging installs only the ETHYLNET node launcher and local SQLite runtime'
   const result = await stageRootfs({ projectRoot: root, targetRoot: target });
 
   const init = await fsp.readFile(path.join(target, 'etc', 'init.d', 'soft'), 'utf8');
-  assert.match(init, /\/usr\/bin\/node\s+\/soft\/ethyl-core\/bin\/ethyl-core\.js/);
+  assert.match(init, /NODE_BIN=\$\{ETHYL_LAUNCHER_NODE:-\/usr\/bin\/node\}/);
+  assert.match(init, /ENTRYPOINT=\$\{ETHYL_LAUNCHER_ENTRYPOINT:-\/soft\/ethyl-core\/bin\/ethyl-core\.js\}/);
   assert.match(init, /ETHYL_STATE_ROOT=\/mnt\/wifi5/);
   assert.match(init, /ETHYL_OPENWRT=1/);
   assert.doesNotMatch(init, /index\.o|ngrok|zerotier|https?:\/\//i);
