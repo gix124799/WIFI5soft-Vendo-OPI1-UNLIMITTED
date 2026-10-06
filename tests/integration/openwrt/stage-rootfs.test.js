@@ -13,6 +13,15 @@ const { stageRootfs } = require('../../../integration/openwrt/stage-rootfs');
 async function tempRoot(t) {
   const target = await fsp.mkdtemp(path.join(os.tmpdir(), 'ethyl-openwrt-stage-'));
   t.after(() => fsp.rm(target, { recursive: true, force: true }));
+  await fsp.mkdir(path.join(target, 'etc', 'config'), { recursive: true });
+  await fsp.writeFile(
+    path.join(target, 'etc', 'config', 'network'),
+    "config device\n\toption name 'br-lan'\n\tlist ports 'eth1'\nconfig interface 'lan'\n\toption device 'br-lan'\n\toption ipaddr '10.0.0.1'\n"
+  );
+  await fsp.writeFile(
+    path.join(target, 'etc', 'config', 'dhcp'),
+    "config dnsmasq\n\toption leasefile '/mnt/wifi5/dhcp.leases'\n"
+  );
   return target;
 }
 
@@ -80,4 +89,67 @@ test('staged production tree contains no opaque-core fallback or remote tunnel t
     .join('\n');
 
   assert.doesNotMatch(text, /\/soft\/index\.o|ngrok|zerotier/i);
+});
+
+test('staging moves only the early DHCP leasefile to /tmp while preserving network bytes', async (t) => {
+  const target = await tempRoot(t);
+  const network = [
+    "config device",
+    "\toption name 'br-lan'",
+    "\toption type 'bridge'",
+    "\tlist ports 'eth1'",
+    "\tlist ports 'vlan.22'",
+    "\tlist ports 'vlan.13'",
+    "",
+    "config interface 'lan'",
+    "\toption device 'br-lan'",
+    "\toption proto 'static'",
+    "\toption ipaddr '10.0.0.1'",
+    "\toption netmask '255.255.224.0'",
+    '',
+  ].join('\n');
+  const dhcp = [
+    'config dnsmasq',
+    "\toption authoritative '1'",
+    "\toption leasefile '/mnt/wifi5/dhcp.leases'",
+    "\toption localservice '1'",
+    '',
+  ].join('\n');
+
+  await fsp.mkdir(path.join(target, 'etc', 'config'), { recursive: true });
+  await fsp.writeFile(path.join(target, 'etc', 'config', 'network'), network);
+  await fsp.writeFile(path.join(target, 'etc', 'config', 'dhcp'), dhcp);
+
+  await stageRootfs({ projectRoot: root, targetRoot: target });
+
+  const stagedNetwork = await fsp.readFile(path.join(target, 'etc', 'config', 'network'), 'utf8');
+  const stagedDhcp = await fsp.readFile(path.join(target, 'etc', 'config', 'dhcp'), 'utf8');
+  assert.equal(stagedNetwork, network);
+  assert.equal(
+    stagedDhcp,
+    dhcp.replace("option leasefile '/mnt/wifi5/dhcp.leases'", "option leasefile '/tmp/dhcp.leases'")
+  );
+});
+
+test('staging rejects a target rootfs with no DHCP config', async (t) => {
+  const target = await tempRoot(t);
+  await fsp.rm(path.join(target, 'etc', 'config', 'dhcp'));
+  await assert.rejects(
+    stageRootfs({ projectRoot: root, targetRoot: target }),
+    /DHCP config|etc\/config\/dhcp/i
+  );
+});
+
+test('staging rejects ambiguous persistent DHCP leasefile declarations', async (t) => {
+  const target = await tempRoot(t);
+  await fsp.mkdir(path.join(target, 'etc', 'config'), { recursive: true });
+  await fsp.writeFile(
+    path.join(target, 'etc', 'config', 'dhcp'),
+    "config dnsmasq\n\toption leasefile '/mnt/wifi5/dhcp.leases'\n\toption leasefile '/mnt/wifi5/dhcp.leases'\n"
+  );
+
+  await assert.rejects(
+    stageRootfs({ projectRoot: root, targetRoot: target }),
+    /ambiguous|exactly one|leasefile/i
+  );
 });

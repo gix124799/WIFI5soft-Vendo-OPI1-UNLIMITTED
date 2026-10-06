@@ -20,6 +20,28 @@ async function copyTree(source, destination) {
   }
 }
 
+async function prepareEarlyDhcp(targetRoot) {
+  const dhcpPath = path.join(targetRoot, 'etc', 'config', 'dhcp');
+  let text;
+  try {
+    text = await fsp.readFile(dhcpPath, 'utf8');
+  } catch (error) {
+    if (error && error.code === 'ENOENT') {
+      throw new Error('target rootfs DHCP config /etc/config/dhcp is required');
+    }
+    throw error;
+  }
+
+  const persistent = "option leasefile '/mnt/wifi5/dhcp.leases'";
+  const matches = text.split(persistent).length - 1;
+  if (matches !== 1) {
+    throw new Error(`expected exactly one persistent DHCP leasefile declaration, found ${matches}`);
+  }
+
+  const staged = text.replace(persistent, "option leasefile '/tmp/dhcp.leases'");
+  await fsp.writeFile(dhcpPath, staged);
+}
+
 async function stageRootfs(options = {}) {
   const projectRoot = path.resolve(options.projectRoot || path.resolve(__dirname, '..', '..'));
   const targetRoot = path.resolve(options.targetRoot || '');
@@ -29,6 +51,8 @@ async function stageRootfs(options = {}) {
   if (fs.existsSync(legacyCore)) {
     throw new Error('legacy core /soft/index.o must be removed before ETHYLNET staging');
   }
+
+  await prepareEarlyDhcp(targetRoot);
 
   const appRoot = path.join(targetRoot, 'soft', 'ethyl-core');
   await fsp.mkdir(appRoot, { recursive: true });
