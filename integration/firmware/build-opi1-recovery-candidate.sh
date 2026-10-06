@@ -108,6 +108,7 @@ out = Path(sys.argv[3])
 fixed = [
     'etc/config/dhcp',
     'etc/init.d/soft',
+    'etc/init.d/ethyl-captive-dns',
     'soft/config/nginx.locations',
     'soft/config/admin.locations',
     'usr/libexec/ethyl/wifi5-storage-bootstrap.sh',

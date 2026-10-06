@@ -27,7 +27,7 @@ const requiredCommandPaths = [
   'usr/bin/logger', 'usr/bin/lsblk', 'usr/bin/awk', 'bin/grep',
   'usr/sbin/fdisk', 'bin/sync', 'usr/sbin/partx', 'usr/sbin/mkfs.ext4',
   'bin/mkdir', 'bin/mount', 'bin/umount', 'sbin/uci', 'bin/cat', 'bin/rm',
-  'bin/netstat', 'usr/bin/node', 'sbin/reboot', 'etc/init.d/dnsmasq',
+  'bin/netstat', 'usr/bin/node', 'sbin/reboot', 'etc/init.d/dnsmasq', 'usr/sbin/dnsmasq',
 ];
 
 test('verifier requires explicit source hash candidate build metadata and report path', () => {

@@ -140,6 +140,12 @@ async function stageRootfs(options = {}) {
   );
 
   await copyFile(
+    path.join(projectRoot, 'integration', 'openwrt', 'ethyl-captive-dns.init'),
+    path.join(targetRoot, 'etc', 'init.d', 'ethyl-captive-dns'),
+    0o755
+  );
+
+  await copyFile(
     path.join(projectRoot, 'integration', 'openwrt', 'wifi5-storage-bootstrap.sh'),
     path.join(targetRoot, 'usr', 'libexec', 'ethyl', 'wifi5-storage-bootstrap.sh'),
     0o755

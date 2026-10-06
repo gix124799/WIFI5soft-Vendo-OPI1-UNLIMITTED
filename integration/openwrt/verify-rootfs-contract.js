@@ -42,6 +42,7 @@ function verifyRootfsContract({ targetRoot } = {}) {
   const pppoeLocations = readText(root, 'soft/config/pppoe.locations');
   const portalNft = readText(root, 'usr/share/nftables.d/chain-pre/dstnat/20-ethyl-portal.nft');
   const launcher = readText(root, 'etc/init.d/soft');
+  const captiveDns = readText(root, 'etc/init.d/ethyl-captive-dns');
 
   const checks = Object.freeze({
     LAN_10_0_0_1:
@@ -91,6 +92,16 @@ function verifyRootfsContract({ targetRoot } = {}) {
     CAPTIVE_PROBES:
       ['/generate_204', '/hotspot-detect.html', '/connecttest.txt', '/ncsi.txt', '/canonical.html']
         .every((probe) => nginxLocations.includes(`location = ${probe} { return 302 http://10.0.0.1/; }`)),
+    CAPTIVE_DNS:
+      executable(root, 'etc/init.d/ethyl-captive-dns') &&
+      /START=79/.test(captiveDns) &&
+      /\/usr\/sbin\/dnsmasq/.test(captiveDns) &&
+      /--port=[\"']?\$LISTEN_PORT/.test(captiveDns) &&
+      /--no-resolv/.test(captiveDns) &&
+      /--address=\/#\/10\.0\.0\.1/.test(captiveDns) &&
+      /@ethyl_authorized_macs\s+return/.test(portalNft) &&
+      /udp\s+dport\s+53\s+redirect\s+to\s+:1053/.test(portalNft) &&
+      /tcp\s+dport\s+53\s+redirect\s+to\s+:1053/.test(portalNft),
   });
 
   return Object.freeze({

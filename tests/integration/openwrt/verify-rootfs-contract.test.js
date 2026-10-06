@@ -69,10 +69,20 @@ async function validRoot(t) {
   await put(target, 'soft/config/pppoe.locations', 'location @backend { proxy_pass http://127.0.0.1:3002; }\n');
   await put(target, 'usr/share/nftables.d/chain-pre/dstnat/20-ethyl-portal.nft', [
     'meta iifname "br-lan" ether saddr @ethyl_authorized_macs return',
+    'meta iifname "br-lan" udp dport 53 redirect to :1053',
+    'meta iifname "br-lan" tcp dport 53 redirect to :1053',
     'meta iifname "br-lan" tcp dport 80 redirect to :80',
     '',
   ].join('\n'));
   await put(target, 'usr/libexec/ethyl/wifi5-storage-bootstrap.sh', '#!/bin/sh\nexit 0\n', 0o755);
+  await put(target, 'etc/init.d/ethyl-captive-dns', [
+    '#!/bin/sh /etc/rc.common',
+    'START=79',
+    'DNSMASQ_BIN=/usr/sbin/dnsmasq',
+    'LISTEN_PORT=1053',
+    'procd_set_param command /usr/sbin/dnsmasq --conf-file=/dev/null --port="$LISTEN_PORT" --no-resolv --address=/#/10.0.0.1',
+    '',
+  ].join('\n'), 0o755);
   await put(target, 'etc/init.d/soft', [
     '#!/bin/sh /etc/rc.common',
     'START=95',
@@ -114,6 +124,7 @@ test('valid staged rootfs passes every deterministic boot and portal check', asy
     CLEAN_ROOM_ONLY: true,
     UI_STATIC_ROOT: true,
     CAPTIVE_PROBES: true,
+    CAPTIVE_DNS: true,
   });
 });
 
@@ -186,4 +197,13 @@ test('missing captive probe redirect fails CAPTIVE_PROBES', async (t) => {
   const result = loadVerifier()({ targetRoot });
   assert.equal(result.ok, false);
   assert.equal(result.checks.CAPTIVE_PROBES, false);
+});
+
+
+test('missing captive DNS service fails CAPTIVE_DNS', async (t) => {
+  const targetRoot = await validRoot(t);
+  await fsp.rm(path.join(targetRoot, 'etc', 'init.d', 'ethyl-captive-dns'));
+  const result = loadVerifier()({ targetRoot });
+  assert.equal(result.ok, false);
+  assert.equal(result.checks.CAPTIVE_DNS, false);
 });

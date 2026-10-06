@@ -50,6 +50,7 @@ check_target_commands() {
     check_one node usr/bin/node
     check_one reboot sbin/reboot
     check_one dnsmasq-init etc/init.d/dnsmasq
+    check_one dnsmasq-binary usr/sbin/dnsmasq sbin/dnsmasq
 
     if [ "$missing" -eq 0 ]; then
         echo 'TARGET_COMMANDS=PASS'
