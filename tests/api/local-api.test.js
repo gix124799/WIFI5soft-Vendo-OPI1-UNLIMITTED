@@ -20,6 +20,8 @@ const { createSalesService } = require('../../src/sales/sales-service');
 const { createTransactionsService } = require('../../src/transactions/transactions-service');
 const { createPppoeService } = require('../../src/pppoe/pppoe-service');
 const { createProviderOperationService } = require('../../src/providers/provider-operation-service');
+const { createRentalService } = require('../../src/rental/rental-service');
+const { createResellerService } = require('../../src/reseller/reseller-service');
 const { registerLocalApi, LOCAL_API_ALIASES } = require('../../src/api/register-local-api');
 
 async function rootFor(t) {
@@ -47,6 +49,8 @@ async function createFixture(t) {
     transactions: createTransactionsService({ store }),
     pppoe: createPppoeService({ store, now: () => 1000, createIdFn: ids }),
     providers: createProviderOperationService({ store, now: () => 1000, createIdFn: ids }),
+    rental: createRentalService({ store, now: () => 1000, createIdFn: ids }),
+    resellers: createResellerService({ store, now: () => 1000, createIdFn: ids }),
   };
   const router = createRouter();
   registerLocalApi(router, services);
@@ -166,4 +170,29 @@ test('unknown route stays a controlled 404', async (t) => {
   const result = await dispatch(router, 'GET', '/api/v1/not-real');
   assert.equal(result.statusCode, 404);
   assert.equal(result.json, null);
+});
+
+
+test('rental and reseller endpoints are real local SQLite mutations', async (t) => {
+  const { router } = await createFixture(t);
+  const rental = await dispatch(router, 'POST', '/api/v1/rental/devices', {
+    name: 'Phone 1',
+    deviceKey: 'phone-api-1',
+  });
+  assert.equal(rental.statusCode, 200);
+  assert.equal(rental.json.data.state, 'offline');
+
+  const state = await dispatch(router, 'POST', '/api/v1/rental/devices/state', {
+    id: rental.json.data.id,
+    state: 'online',
+  });
+  assert.equal(state.json.data.state, 'online');
+
+  const reseller = await dispatch(router, 'POST', '/api/v1/resellers', {
+    username: 'dealer-api',
+    displayName: 'Dealer API',
+  });
+  assert.equal(reseller.statusCode, 200);
+  const resellers = await dispatch(router, 'GET', '/api/v1/resellers');
+  assert.equal(resellers.json.data[0].username, 'dealer-api');
 });

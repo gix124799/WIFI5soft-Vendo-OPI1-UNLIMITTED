@@ -28,6 +28,8 @@ function requireServices(services) {
     'transactions',
     'pppoe',
     'providers',
+    'rental',
+    'resellers',
   ];
   for (const name of required) {
     if (!services || !services[name]) {
@@ -121,6 +123,17 @@ function registerLocalApi(router, suppliedServices) {
 
   router.register('GET', '/api/v1/providers/operations', getHandler(() => services.providers.list()));
   router.register('POST', '/api/v1/providers/execute', postHandler((body) => services.providers.execute(body)));
+
+  router.register('GET', '/api/v1/rental/devices', getHandler(() => services.rental.list()));
+  router.register('POST', '/api/v1/rental/devices', postHandler((body) => services.rental.register(body)));
+  router.register('POST', '/api/v1/rental/devices/state', postHandler((body) => services.rental.setState(body.id, body.state)));
+
+  router.register('GET', '/api/v1/resellers', getHandler(() => services.resellers.list()));
+  router.register('POST', '/api/v1/resellers', postHandler((body) => services.resellers.create(body)));
+  router.register('POST', '/api/v1/resellers/update', postHandler((body) => {
+    const { id, ...changes } = body;
+    return services.resellers.update(id, changes);
+  }));
 
   return Object.freeze({
     aliases: LOCAL_API_ALIASES,

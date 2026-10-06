@@ -2,6 +2,10 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fsp = require('node:fs/promises');
+const os = require('node:os');
+const path = require('node:path');
+const { createRouter } = require('../../src/http/router');
 
 const { createProductionApp } = require('../../src/core/app');
 
@@ -111,4 +115,27 @@ test('failed HTTP startup closes the opened store and remains stopped', async ()
   assert.equal(app.isStarted(), false);
   assert.ok(calls.includes('store.close'));
   assert.equal(typeof store.close, 'function');
+});
+
+
+test('default production composition includes rental and reseller local services', async (t) => {
+  const root = await fsp.mkdtemp(path.join(os.tmpdir(), 'ethyl-compose-real-'));
+  t.after(() => fsp.rm(root, { recursive: true, force: true }));
+  const http = {
+    upstream3000Router: createRouter(),
+    upstream3001Router: createRouter(),
+    async start() {},
+    async stop() {},
+    snapshot() { return Object.freeze({ started: true }); },
+  };
+  const app = createProductionApp({
+    config: { stateRoot: root, logLevel: 'info' },
+    logger: { debug() {}, info() {}, warn() {}, error() {} },
+    createHttp: () => http,
+  });
+  await app.start();
+  t.after(() => app.stop());
+  const services = app.services();
+  assert.equal(typeof services.rental.register, 'function');
+  assert.equal(typeof services.resellers.create, 'function');
 });

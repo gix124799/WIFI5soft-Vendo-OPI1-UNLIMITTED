@@ -59,6 +59,8 @@ function defaultServices({ store, providerAdapters = {} }) {
   const { createTransactionsService } = require('../transactions/transactions-service');
   const { createPppoeService } = require('../pppoe/pppoe-service');
   const { createProviderOperationService } = require('../providers/provider-operation-service');
+  const { createRentalService } = require('../rental/rental-service');
+  const { createResellerService } = require('../reseller/reseller-service');
 
   return Object.freeze({
     settings: createSettingsService({ store }),
@@ -71,6 +73,8 @@ function defaultServices({ store, providerAdapters = {} }) {
     transactions: createTransactionsService({ store }),
     pppoe: createPppoeService({ store }),
     providers: createProviderOperationService({ store, adapters: providerAdapters }),
+    rental: createRentalService({ store }),
+    resellers: createResellerService({ store }),
   });
 }
 
