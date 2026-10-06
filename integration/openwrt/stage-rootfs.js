@@ -74,6 +74,12 @@ async function stageRootfs(options = {}) {
   );
 
   await copyFile(
+    path.join(projectRoot, 'integration', 'openwrt', 'wifi5-storage-bootstrap.sh'),
+    path.join(targetRoot, 'usr', 'libexec', 'ethyl', 'wifi5-storage-bootstrap.sh'),
+    0o755
+  );
+
+  await copyFile(
     path.join(projectRoot, 'integration', 'openwrt', 'pppoe-server-options'),
     path.join(targetRoot, 'etc', 'ppp', 'pppoe-server-options'),
     0o600

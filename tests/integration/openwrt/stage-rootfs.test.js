@@ -153,3 +153,17 @@ test('staging rejects ambiguous persistent DHCP leasefile declarations', async (
     /ambiguous|exactly one|leasefile/i
   );
 });
+
+
+test('staging installs the WiFi5 bootstrap helper with only target-proven commands', async (t) => {
+  const target = await tempRoot(t);
+  await stageRootfs({ projectRoot: root, targetRoot: target });
+  const installed = path.join(target, 'usr', 'libexec', 'ethyl', 'wifi5-storage-bootstrap.sh');
+  const text = await fsp.readFile(installed, 'utf8');
+  const mode = (await fsp.stat(installed)).mode & 0o777;
+  assert.equal(mode, 0o755);
+  assert.doesNotMatch(text, /\b(?:sfdisk|blkid|findmnt|mountpoint|partprobe)\b/);
+  for (const command of ['lsblk', 'fdisk', 'partx', 'mkfs.ext4', 'mount', 'umount', 'sync', 'uci', 'logger']) {
+    assert.match(text, new RegExp(`\\b${command.replace('.', '\\.') }\\b`));
+  }
+});
