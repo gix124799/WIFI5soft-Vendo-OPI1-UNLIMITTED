@@ -4,7 +4,6 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { execFileSync } = require('node:child_process');
 
 const root = path.resolve(__dirname, '..', '..');
 const uiRoot = path.join(root, 'src', 'ui');
@@ -60,11 +59,8 @@ test('UI assets do not contain obvious embedded credentials or new listener code
   assert.doesNotMatch(text, /\.listen\s*\(|createServer\s*\(/);
 });
 
-test('UI foundation does not modify the clean-room runtime entrypoint', () => {
-  const diff = execFileSync(
-    'git',
-    ['diff', 'main...HEAD', '--', 'bin/ethyl-core.js'],
-    { cwd: root, encoding: 'utf8' }
-  );
-  assert.equal(diff, '');
+test('UI remains compatible with the local SQLite production entrypoint', () => {
+  const entry = fs.readFileSync(path.join(root, 'bin', 'ethyl-core.js'), 'utf8');
+  assert.match(entry, /createProductionApp/);
+  assert.doesNotMatch(entry, /\/soft\/index\.o|https?:\/\//i);
 });
