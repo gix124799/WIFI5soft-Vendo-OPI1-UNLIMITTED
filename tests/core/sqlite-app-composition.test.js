@@ -151,3 +151,41 @@ test('default production composition includes rental and reseller local services
   assert.equal(typeof services.rental.register, 'function');
   assert.equal(typeof services.resellers.create, 'function');
 });
+
+
+test('firmware mode starts and stops access reconciliation around local listeners', async () => {
+  const calls=[];
+  const store={async close(){calls.push('store.close');}};
+  const services={
+    ready:true,
+    devices:{get(){},upsert(){}},
+    sessions:{list(){return[];}},
+  };
+  const http={
+    upstream3000Router:{register(){},routeCount(){return 0;}},
+    upstream3001Router:{register(){},routeCount(){return 0;}},
+    async start(){calls.push('http.start');}, async stop(){calls.push('http.stop');}, snapshot(){return{};}
+  };
+  const dhcp={async start(){calls.push('dhcp.start');},async stop(){calls.push('dhcp.stop');}};
+  const access={async start(){calls.push('access.start');},async stop(){calls.push('access.stop');}};
+  const app=createProductionApp({
+    config:{stateRoot:'/mnt/wifi5',logLevel:'info',openwrt:true},
+    logger:{debug(){},info(){},warn(){},error(){}},
+    openStore:async()=>store, migrate:async()=>{}, createServices:()=>services,
+    createHttp:()=>http, registerApi:()=>{}, createDhcp:()=>dhcp, createAccess:()=>access,
+  });
+  await app.start();
+  assert.deepEqual(calls,['dhcp.start','access.start','http.start']);
+  calls.length=0;
+  await app.stop();
+  assert.deepEqual(calls,['http.stop','access.stop','dhcp.stop','store.close']);
+});
+
+test('host mode does not create OpenWrt access adapter', async () => {
+  const { deps } = fixture();
+  let created=0;
+  const app=createProductionApp({ ...deps, config:{...deps.config,openwrt:false}, createAccess(){created++; throw new Error('must not create');} });
+  await app.start();
+  assert.equal(created,0);
+  await app.stop();
+});

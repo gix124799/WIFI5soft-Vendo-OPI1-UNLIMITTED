@@ -7,7 +7,7 @@ USE_PROCD=1
 start_service() {
     procd_open_instance
     procd_set_param command /usr/bin/node /soft/ethyl-core/bin/ethyl-core.js
-    procd_set_param env ETHYL_STATE_ROOT=/mnt/wifi5 ETHYL_LOG_LEVEL=info
+    procd_set_param env ETHYL_STATE_ROOT=/mnt/wifi5 ETHYL_LOG_LEVEL=info ETHYL_OPENWRT=1
     procd_set_param respawn 3600 5 5
     procd_set_param stdout 1
     procd_set_param stderr 1

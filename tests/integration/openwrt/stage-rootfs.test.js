@@ -34,6 +34,7 @@ test('staging installs only the ETHYLNET node launcher and local SQLite runtime'
   const init = await fsp.readFile(path.join(target, 'etc', 'init.d', 'soft'), 'utf8');
   assert.match(init, /\/usr\/bin\/node\s+\/soft\/ethyl-core\/bin\/ethyl-core\.js/);
   assert.match(init, /ETHYL_STATE_ROOT=\/mnt\/wifi5/);
+  assert.match(init, /ETHYL_OPENWRT=1/);
   assert.doesNotMatch(init, /index\.o|ngrok|zerotier|https?:\/\//i);
 
   assert.equal(fs.existsSync(path.join(target, 'soft', 'index.o')), false);
@@ -42,6 +43,17 @@ test('staging installs only the ETHYLNET node launcher and local SQLite runtime'
   assert.equal(fs.existsSync(path.join(target, 'soft', 'ethyl-core', 'node_modules', 'sql.js', 'dist', 'sql-wasm.js')), true);
   assert.equal(fs.existsSync(path.join(target, 'soft', 'ethyl-core', 'node_modules', 'sql.js', 'dist', 'sql-wasm.wasm')), true);
   assert.equal(fs.existsSync(path.join(target, 'mnt', 'wifi5', 'ethyl')), true);
+
+  const nftSet = await fsp.readFile(path.join(target, 'usr', 'share', 'nftables.d', 'table-pre', '20-ethyl-access-set.nft'), 'utf8');
+  const forward = await fsp.readFile(path.join(target, 'usr', 'share', 'nftables.d', 'chain-pre', 'forward', '20-ethyl-access.nft'), 'utf8');
+  const dstnat = await fsp.readFile(path.join(target, 'usr', 'share', 'nftables.d', 'chain-pre', 'dstnat', '20-ethyl-portal.nft'), 'utf8');
+  assert.match(nftSet, /set ethyl_authorized_macs/);
+  assert.match(nftSet, /type ether_addr/);
+  assert.match(nftSet, /flags timeout/);
+  assert.match(forward, /@ethyl_authorized_macs/);
+  assert.match(forward, /drop/);
+  assert.match(dstnat, /tcp dport 80/);
+  assert.match(dstnat, /redirect to :80/);
   assert.equal(result.stateRoot, '/mnt/wifi5');
 });
 

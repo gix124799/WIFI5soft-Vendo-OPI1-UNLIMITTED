@@ -78,6 +78,18 @@ function defaultServices({ store, providerAdapters = {} }) {
   });
 }
 
+
+function defaultAccess({ services, logger }) {
+  const { createOpenWrtAccessAdapter } = require('../network/openwrt-access-adapter');
+  const { createAccessReconciler } = require('../network/access-reconciler');
+  return createAccessReconciler({
+    sessions: services.sessions,
+    devices: services.devices,
+    adapter: createOpenWrtAccessAdapter(),
+    logger,
+  });
+}
+
 function createProductionApp(options = {}) {
   const config = options.config;
   const logger = options.logger;
@@ -88,6 +100,7 @@ function createProductionApp(options = {}) {
   const migrate = options.migrate || require('../db/migrations').applyMigrations;
   const createHttp = options.createHttp || require('../http').createHttpLayer;
   const createDhcp = options.createDhcp || require('../network/dhcp-event-listener').createDhcpEventListener;
+  const createAccess = options.createAccess || defaultAccess;
   const createServices = options.createServices || defaultServices;
   const registerApi = options.registerApi || require('../api/register-local-api').registerLocalApi;
   const providerAdapters = options.providerAdapters || {};
@@ -98,6 +111,7 @@ function createProductionApp(options = {}) {
   let store = null;
   let http = null;
   let dhcp = null;
+  let access = null;
   let services = null;
 
   async function startTransaction() {
@@ -109,12 +123,19 @@ function createProductionApp(options = {}) {
       registerApi(http.upstream3000Router, services);
       dhcp = createDhcp({ devices: services.devices, logger });
       await dhcp.start();
+      if (config.openwrt === true) {
+        access = createAccess({ services, logger, config });
+        await access.start();
+      }
       await http.start();
       started = true;
     } catch (error) {
       started = false;
       if (http && typeof http.stop === 'function') {
         try { await http.stop(); } catch (_stopError) {}
+      }
+      if (access && typeof access.stop === 'function') {
+        try { await access.stop(); } catch (_stopError) {}
       }
       if (dhcp && typeof dhcp.stop === 'function') {
         try { await dhcp.stop(); } catch (_stopError) {}
@@ -123,6 +144,7 @@ function createProductionApp(options = {}) {
         try { await store.close(); } catch (_closeError) {}
       }
       http = null;
+      access = null;
       dhcp = null;
       store = null;
       services = null;
@@ -143,6 +165,9 @@ function createProductionApp(options = {}) {
     if (http && typeof http.stop === 'function') {
       try { await http.stop(); } catch (error) { firstError = error; }
     }
+    if (access && typeof access.stop === 'function') {
+      try { await access.stop(); } catch (error) { if (!firstError) firstError = error; }
+    }
     if (dhcp && typeof dhcp.stop === 'function') {
       try { await dhcp.stop(); } catch (error) { if (!firstError) firstError = error; }
     }
@@ -151,6 +176,7 @@ function createProductionApp(options = {}) {
     }
     started = false;
     http = null;
+    access = null;
     dhcp = null;
     store = null;
     services = null;

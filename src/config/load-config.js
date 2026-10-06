@@ -44,9 +44,15 @@ function loadConfig(env = process.env) {
     throw new TypeError('invalid log level');
   }
 
+  const rawOpenWrt = hasOwn(env, 'ETHYL_OPENWRT') ? env.ETHYL_OPENWRT : '0';
+  if (rawOpenWrt !== '0' && rawOpenWrt !== '1') {
+    throw new TypeError('invalid ETHYL_OPENWRT value; expected 0 or 1');
+  }
+
   return Object.freeze({
     stateRoot: path.normalize(rawStateRoot),
-    logLevel: rawLogLevel
+    logLevel: rawLogLevel,
+    openwrt: rawOpenWrt === '1'
   });
 }
 

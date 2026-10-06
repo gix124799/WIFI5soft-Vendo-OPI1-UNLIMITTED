@@ -1,0 +1,2 @@
+meta iifname "br-lan" ether saddr @ethyl_authorized_macs return
+meta iifname "br-lan" tcp dport 80 redirect to :80

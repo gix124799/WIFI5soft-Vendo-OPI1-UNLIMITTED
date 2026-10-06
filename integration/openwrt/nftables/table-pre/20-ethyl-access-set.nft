@@ -1,0 +1,4 @@
+set ethyl_authorized_macs {
+    type ether_addr
+    flags timeout
+}

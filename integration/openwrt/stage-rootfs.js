@@ -49,6 +49,23 @@ async function stageRootfs(options = {}) {
     0o755
   );
 
+  const nftRoot = path.join(projectRoot, 'integration', 'openwrt', 'nftables');
+  await copyFile(
+    path.join(nftRoot, 'table-pre', '20-ethyl-access-set.nft'),
+    path.join(targetRoot, 'usr', 'share', 'nftables.d', 'table-pre', '20-ethyl-access-set.nft'),
+    0o644
+  );
+  await copyFile(
+    path.join(nftRoot, 'chain-pre', 'forward', '20-ethyl-access.nft'),
+    path.join(targetRoot, 'usr', 'share', 'nftables.d', 'chain-pre', 'forward', '20-ethyl-access.nft'),
+    0o644
+  );
+  await copyFile(
+    path.join(nftRoot, 'chain-pre', 'dstnat', '20-ethyl-portal.nft'),
+    path.join(targetRoot, 'usr', 'share', 'nftables.d', 'chain-pre', 'dstnat', '20-ethyl-portal.nft'),
+    0o644
+  );
+
   await fsp.mkdir(path.join(targetRoot, 'mnt', 'wifi5', 'ethyl'), { recursive: true });
 
   return Object.freeze({
