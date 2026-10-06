@@ -147,7 +147,7 @@ function createPppoeService(options = {}) {
          WHERE id = ?`,
         [username, secret, profile, enabled ? 1 : 0, expiresAt, timestamp, accountId]
       );
-      await apply(Object.freeze({ ...candidate }));
+      await apply(Object.freeze({ ...candidate }), mapPrivate(existing));
     });
 
     return get(accountId);

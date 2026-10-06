@@ -54,6 +54,9 @@ test('staging installs only the ETHYLNET node launcher and local SQLite runtime'
   assert.match(forward, /drop/);
   assert.match(dstnat, /tcp dport 80/);
   assert.match(dstnat, /redirect to :80/);
+  const pppOptions = await fsp.readFile(path.join(target, 'etc', 'ppp', 'pppoe-server-options'), 'utf8');
+  assert.match(pppOptions, /require-chap/);
+  assert.doesNotMatch(pppOptions, /radius|plugin/i);
   assert.equal(result.stateRoot, '/mnt/wifi5');
 });
 

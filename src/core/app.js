@@ -48,7 +48,7 @@ function createApp({ config, logger, registry, store } = {}) {
   return Object.freeze({ start, stop, health, isStarted: () => started });
 }
 
-function defaultServices({ store, providerAdapters = {} }) {
+function defaultServices({ store, providerAdapters = {}, pppoeAdapter = {} }) {
   const { createSettingsService } = require('../settings/settings-service');
   const { createDeviceService } = require('../devices/device-service');
   const { createUserService } = require('../users/user-service');
@@ -71,7 +71,7 @@ function defaultServices({ store, providerAdapters = {} }) {
     vendo: createVendoService({ store }),
     sales: createSalesService({ store }),
     transactions: createTransactionsService({ store }),
-    pppoe: createPppoeService({ store }),
+    pppoe: createPppoeService({ store, adapter: pppoeAdapter }),
     providers: createProviderOperationService({ store, adapters: providerAdapters }),
     rental: createRentalService({ store }),
     resellers: createResellerService({ store }),
@@ -104,6 +104,9 @@ function createProductionApp(options = {}) {
   const createServices = options.createServices || defaultServices;
   const registerApi = options.registerApi || require('../api/register-local-api').registerLocalApi;
   const providerAdapters = options.providerAdapters || {};
+  const pppoeAdapter = options.pppoeAdapter || (config.openwrt === true
+    ? require('../pppoe/openwrt-pppoe-adapter').createOpenWrtPppoeAdapter()
+    : {});
 
   let started = false;
   let starting = null;
@@ -118,7 +121,7 @@ function createProductionApp(options = {}) {
     try {
       store = await openStore({ stateRoot: config.stateRoot });
       await migrate(store);
-      services = createServices({ store, providerAdapters, logger, config });
+      services = createServices({ store, providerAdapters, pppoeAdapter, logger, config });
       http = createHttp({ logger });
       registerApi(http.upstream3000Router, services);
       dhcp = createDhcp({ devices: services.devices, logger });

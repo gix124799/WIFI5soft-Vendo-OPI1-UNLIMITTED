@@ -189,3 +189,23 @@ test('host mode does not create OpenWrt access adapter', async () => {
   assert.equal(created,0);
   await app.stop();
 });
+
+
+test('production composition passes PPPoE mutations through supplied system adapter', async (t) => {
+  const root = await fsp.mkdtemp(path.join(os.tmpdir(), 'ethyl-pppoe-compose-'));
+  t.after(() => fsp.rm(root, { recursive: true, force: true }));
+  const applied=[];
+  const http={
+    upstream3000Router:createRouter(), upstream3001Router:createRouter(),
+    async start(){}, async stop(){}, snapshot(){return{};}
+  };
+  const app=createProductionApp({
+    config:{stateRoot:root,logLevel:'info',openwrt:false},
+    logger:{debug(){},info(){},warn(){},error(){}}, createHttp:()=>http,
+    createDhcp:()=>({async start(){},async stop(){}}),
+    pppoeAdapter:{async upsertAccount(account){applied.push(account.username);}},
+  });
+  await app.start(); t.after(()=>app.stop());
+  await app.services().pppoe.create({username:'wired',secret:'pw'});
+  assert.deepEqual(applied,['wired']);
+});

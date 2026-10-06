@@ -49,6 +49,12 @@ async function stageRootfs(options = {}) {
     0o755
   );
 
+  await copyFile(
+    path.join(projectRoot, 'integration', 'openwrt', 'pppoe-server-options'),
+    path.join(targetRoot, 'etc', 'ppp', 'pppoe-server-options'),
+    0o600
+  );
+
   const nftRoot = path.join(projectRoot, 'integration', 'openwrt', 'nftables');
   await copyFile(
     path.join(nftRoot, 'table-pre', '20-ethyl-access-set.nft'),
