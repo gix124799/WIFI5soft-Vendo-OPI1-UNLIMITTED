@@ -22,6 +22,15 @@ async function tempRoot(t) {
     path.join(target, 'etc', 'config', 'dhcp'),
     "config dnsmasq\n\toption leasefile '/mnt/wifi5/dhcp.leases'\n"
   );
+  await fsp.mkdir(path.join(target, 'soft', 'config'), { recursive: true });
+  await fsp.writeFile(
+    path.join(target, 'soft', 'config', 'nginx.locations'),
+    "location ~ \\.css$ { root /tmp/i/public; }\nlocation / { try_files $uri @backend; }\nlocation @backend { proxy_pass http://backend; }\n"
+  );
+  await fsp.writeFile(
+    path.join(target, 'soft', 'config', 'admin.locations'),
+    "root /tmp/i/public;\nlocation /admin { try_files $uri @backend; }\nlocation / { return 302 http://$host/admin; }\n"
+  );
   return target;
 }
 
@@ -167,4 +176,33 @@ test('staging installs the WiFi5 bootstrap helper with only target-proven comman
   for (const command of ['lsblk', 'fdisk', 'partx', 'mkfs.ext4', 'mount', 'umount', 'sync', 'uci', 'logger']) {
     assert.match(text, new RegExp(`\\b${command.replace('.', '\\.') }\\b`));
   }
+});
+
+
+test('staging installs a persistent portal/admin webroot and explicit captive probe routes', async (t) => {
+  const target = await tempRoot(t);
+  await stageRootfs({ projectRoot: root, targetRoot: target });
+
+  for (const relative of [
+    'soft/ethyl-core/public/index.html',
+    'soft/ethyl-core/public/portal.css',
+    'soft/ethyl-core/public/portal.js',
+    'soft/ethyl-core/public/admin/index.html',
+    'soft/ethyl-core/public/admin.css',
+    'soft/ethyl-core/public/admin.js',
+  ]) {
+    assert.equal(fs.existsSync(path.join(target, relative)), true, relative);
+  }
+
+  const nginx = await fsp.readFile(path.join(target, 'soft', 'config', 'nginx.locations'), 'utf8');
+  assert.match(nginx, /root \/soft\/ethyl-core\/public;/);
+  assert.doesNotMatch(nginx, /\/tmp\/i\/public/);
+  assert.match(nginx, /location = \/ \{/);
+  assert.match(nginx, /try_files \/index\.html/);
+  assert.match(nginx, /location = \/admin \{/);
+  assert.match(nginx, /try_files \/admin\/index\.html/);
+  for (const probe of ['generate_204', 'hotspot-detect.html', 'connecttest.txt', 'ncsi.txt', 'canonical.html']) {
+    assert.match(nginx, new RegExp(`location = \/${probe.replace('.', '\\.')} \\{`));
+  }
+  assert.match(nginx, /return 302 http:\/\/10\.0\.0\.1\//);
 });

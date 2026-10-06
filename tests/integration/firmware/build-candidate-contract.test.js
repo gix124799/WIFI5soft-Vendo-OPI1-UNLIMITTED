@@ -63,5 +63,7 @@ test('builder contract uses verified decompression, p2 debugfs staging, geometry
   assert.match(text, /fdisk\s+-l/);
   assert.match(text, /trailer/i);
   assert.match(text, /verify-rootfs-contract\.js/);
+  assert.match(text, /soft\/config\/nginx\.locations/);
+  assert.match(text, /soft\/config\/admin\.locations/);
   assert.doesNotMatch(text, /gzip\s+-c[\s\S]*OUTPUT_RAW/);
 });

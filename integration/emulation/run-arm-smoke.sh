@@ -15,8 +15,8 @@ STATE_ROOT=$(readlink -f "$2")
 [ ! -e "$ROOTFS/soft/index.o" ] || { echo "legacy /soft/index.o is forbidden in ARM smoke rootfs" >&2; exit 1; }
 [ -x "$ROOTFS/usr/bin/node" ] || { echo "target ARM node is missing or not executable" >&2; exit 1; }
 [ -f "$ROOTFS/soft/ethyl-core/bin/ethyl-core.js" ] || { echo "clean-room ethyl-core entrypoint is missing" >&2; exit 1; }
-[ -f "$ROOTFS/soft/ethyl-core/src/ui/portal/index.html" ] || { echo "portal shell is missing" >&2; exit 1; }
-[ -f "$ROOTFS/soft/ethyl-core/src/ui/admin/index.html" ] || { echo "admin shell is missing" >&2; exit 1; }
+[ -f "$ROOTFS/soft/ethyl-core/public/index.html" ] || { echo "portal shell is missing" >&2; exit 1; }
+[ -f "$ROOTFS/soft/ethyl-core/public/admin/index.html" ] || { echo "admin shell is missing" >&2; exit 1; }
 [ -w "$STATE_ROOT" ] || { echo "state directory is not writable" >&2; exit 1; }
 
 for command in bwrap proot qemu-arm timeout curl setsid; do
@@ -97,8 +97,8 @@ grep -q '"database":"sqlite"' "$STATE_ROOT/health.json"
 echo 'ARM_RUNTIME=PASS'
 echo 'NO_WAN=PASS'
 
-[ -f "$ROOTFS/soft/ethyl-core/src/ui/portal/index.html" ]
-[ -f "$ROOTFS/soft/ethyl-core/src/ui/admin/index.html" ]
+[ -f "$ROOTFS/soft/ethyl-core/public/index.html" ]
+[ -f "$ROOTFS/soft/ethyl-core/public/admin/index.html" ]
 curl -fsS --max-time 2 http://127.0.0.1:3000/api/v1/health >/dev/null
 echo 'PORTAL_ADMIN=PASS'
 

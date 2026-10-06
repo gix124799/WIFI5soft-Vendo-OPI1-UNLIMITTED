@@ -39,10 +39,22 @@ async function validRoot(t) {
   await put(target, 'etc/config/dhcp', "config dnsmasq\n\toption leasefile '/tmp/dhcp.leases'\n");
   await put(target, 'etc/config/dropbear', "config dropbear main\n\toption enable '1'\n\toption Interface 'lan'\n");
   await put(target, 'soft/config/admin.locations', [
-    'root /tmp/i/public;',
+    'root /soft/ethyl-core/public;',
     'location /admin { try_files $uri @backend; }',
     'location / { try_files $uri @backend; }',
     'location @backend { proxy_pass http://backend; }',
+    '',
+  ].join('\n'));
+  await put(target, 'soft/config/nginx.locations', [
+    'root /soft/ethyl-core/public;',
+    'location = / { try_files /index.html @backend; }',
+    'location = /admin { try_files /admin/index.html @backend; }',
+    'location = /generate_204 { return 302 http://10.0.0.1/; }',
+    'location = /hotspot-detect.html { return 302 http://10.0.0.1/; }',
+    'location = /connecttest.txt { return 302 http://10.0.0.1/; }',
+    'location = /ncsi.txt { return 302 http://10.0.0.1/; }',
+    'location = /canonical.html { return 302 http://10.0.0.1/; }',
+    'location / { try_files $uri @backend; }',
     '',
   ].join('\n'));
   await put(target, 'soft/config/nginx.conf', [
@@ -69,6 +81,12 @@ async function validRoot(t) {
     '',
   ].join('\n'), 0o755);
   await put(target, 'soft/ethyl-core/bin/ethyl-core.js', "'use strict';\n", 0o755);
+  await put(target, 'soft/ethyl-core/public/index.html', '<title>ETHYLNET WiFi</title>\n');
+  await put(target, 'soft/ethyl-core/public/admin/index.html', '<title>ETHYLNET Admin</title>\n');
+  await put(target, 'soft/ethyl-core/public/portal.css', 'body{}\n');
+  await put(target, 'soft/ethyl-core/public/portal.js', "'use strict';\n");
+  await put(target, 'soft/ethyl-core/public/admin.css', 'body{}\n');
+  await put(target, 'soft/ethyl-core/public/admin.js', "'use strict';\n");
   return target;
 }
 
@@ -94,6 +112,8 @@ test('valid staged rootfs passes every deterministic boot and portal check', asy
     DROPBEAR_LAN: true,
     STORAGE_BOOTSTRAP: true,
     CLEAN_ROOM_ONLY: true,
+    UI_STATIC_ROOT: true,
+    CAPTIVE_PROBES: true,
   });
 });
 
@@ -147,4 +167,23 @@ test('CLI exits 0 only for a passing rootfs and prints named checks', async (t) 
   const fail = spawnSync(process.execPath, [verifierPath, targetRoot], { encoding: 'utf8' });
   assert.notEqual(fail.status, 0);
   assert.match(fail.stdout, /CLEAN_ROOM_ONLY=FAIL/);
+});
+
+
+test('missing persistent UI root fails UI_STATIC_ROOT', async (t) => {
+  const targetRoot = await validRoot(t);
+  await fsp.rm(path.join(targetRoot, 'soft', 'ethyl-core', 'public', 'index.html'));
+  const result = loadVerifier()({ targetRoot });
+  assert.equal(result.ok, false);
+  assert.equal(result.checks.UI_STATIC_ROOT, false);
+});
+
+test('missing captive probe redirect fails CAPTIVE_PROBES', async (t) => {
+  const targetRoot = await validRoot(t);
+  const file = path.join(targetRoot, 'soft', 'config', 'nginx.locations');
+  const text = (await fsp.readFile(file, 'utf8')).replace('location = /generate_204 { return 302 http://10.0.0.1/; }\n', '');
+  await fsp.writeFile(file, text);
+  const result = loadVerifier()({ targetRoot });
+  assert.equal(result.ok, false);
+  assert.equal(result.checks.CAPTIVE_PROBES, false);
 });

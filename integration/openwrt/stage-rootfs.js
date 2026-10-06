@@ -42,6 +42,70 @@ async function prepareEarlyDhcp(targetRoot) {
   await fsp.writeFile(dhcpPath, staged);
 }
 
+async function stageUiPublic(projectRoot, targetRoot) {
+  const publicRoot = path.join(targetRoot, 'soft', 'ethyl-core', 'public');
+  const portalRoot = path.join(projectRoot, 'src', 'ui', 'portal');
+  const adminRoot = path.join(projectRoot, 'src', 'ui', 'admin');
+
+  await copyFile(path.join(portalRoot, 'index.html'), path.join(publicRoot, 'index.html'), 0o644);
+  await copyFile(path.join(portalRoot, 'portal.css'), path.join(publicRoot, 'portal.css'), 0o644);
+  await copyFile(path.join(portalRoot, 'portal.js'), path.join(publicRoot, 'portal.js'), 0o644);
+  await copyFile(path.join(adminRoot, 'index.html'), path.join(publicRoot, 'admin', 'index.html'), 0o644);
+  await copyFile(path.join(adminRoot, 'admin.css'), path.join(publicRoot, 'admin.css'), 0o644);
+  await copyFile(path.join(adminRoot, 'admin.js'), path.join(publicRoot, 'admin.js'), 0o644);
+  await copyFile(path.join(adminRoot, 'admin.css'), path.join(publicRoot, 'admin', 'admin.css'), 0o644);
+  await copyFile(path.join(adminRoot, 'admin.js'), path.join(publicRoot, 'admin', 'admin.js'), 0o644);
+}
+
+async function prepareUiRouting(targetRoot) {
+  const persistentRoot = '/soft/ethyl-core/public';
+  const nginxPath = path.join(targetRoot, 'soft', 'config', 'nginx.locations');
+  const adminPath = path.join(targetRoot, 'soft', 'config', 'admin.locations');
+
+  let nginx;
+  let admin;
+  try {
+    nginx = await fsp.readFile(nginxPath, 'utf8');
+    admin = await fsp.readFile(adminPath, 'utf8');
+  } catch (error) {
+    if (error && error.code === 'ENOENT') {
+      throw new Error('target rootfs nginx location configs are required');
+    }
+    throw error;
+  }
+
+  nginx = nginx.replaceAll('/tmp/i/public', persistentRoot);
+  admin = admin.replaceAll('/tmp/i/public', persistentRoot);
+
+  const captiveBlock = [
+    `root ${persistentRoot};`,
+    '',
+    'location = / {',
+    `    root ${persistentRoot};`,
+    '    try_files /index.html @backend;',
+    '}',
+    '',
+    'location = /admin {',
+    `    root ${persistentRoot};`,
+    '    try_files /admin/index.html @backend;',
+    '}',
+    '',
+    'location = /generate_204 { return 302 http://10.0.0.1/; }',
+    'location = /hotspot-detect.html { return 302 http://10.0.0.1/; }',
+    'location = /connecttest.txt { return 302 http://10.0.0.1/; }',
+    'location = /ncsi.txt { return 302 http://10.0.0.1/; }',
+    'location = /canonical.html { return 302 http://10.0.0.1/; }',
+    '',
+  ].join('\n');
+
+  if (!nginx.includes('location = /generate_204')) {
+    nginx = captiveBlock + nginx;
+  }
+
+  await fsp.writeFile(nginxPath, nginx);
+  await fsp.writeFile(adminPath, admin);
+}
+
 async function stageRootfs(options = {}) {
   const projectRoot = path.resolve(options.projectRoot || path.resolve(__dirname, '..', '..'));
   const targetRoot = path.resolve(options.targetRoot || '');
@@ -58,6 +122,8 @@ async function stageRootfs(options = {}) {
   await fsp.mkdir(appRoot, { recursive: true });
   await copyTree(path.join(projectRoot, 'bin'), path.join(appRoot, 'bin'));
   await copyTree(path.join(projectRoot, 'src'), path.join(appRoot, 'src'));
+  await stageUiPublic(projectRoot, targetRoot);
+  await prepareUiRouting(targetRoot);
   await copyFile(path.join(projectRoot, 'package.json'), path.join(appRoot, 'package.json'));
   await copyFile(path.join(projectRoot, 'package-lock.json'), path.join(appRoot, 'package-lock.json'));
 

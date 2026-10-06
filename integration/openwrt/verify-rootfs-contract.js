@@ -37,6 +37,7 @@ function verifyRootfsContract({ targetRoot } = {}) {
   const dhcp = readText(root, 'etc/config/dhcp');
   const dropbear = readText(root, 'etc/config/dropbear');
   const admin = readText(root, 'soft/config/admin.locations');
+  const nginxLocations = readText(root, 'soft/config/nginx.locations');
   const nginxUpstreams = readText(root, 'soft/config/nginx.conf');
   const pppoeLocations = readText(root, 'soft/config/pppoe.locations');
   const portalNft = readText(root, 'usr/share/nftables.d/chain-pre/dstnat/20-ethyl-portal.nft');
@@ -74,6 +75,22 @@ function verifyRootfsContract({ targetRoot } = {}) {
       /\/usr\/bin\/node/.test(launcher) &&
       /\/soft\/ethyl-core\/bin\/ethyl-core\.js/.test(launcher) &&
       !/index\.o/.test(launcher),
+    UI_STATIC_ROOT:
+      /root\s+\/soft\/ethyl-core\/public;/.test(nginxLocations) &&
+      !/\/tmp\/i\/public/.test(nginxLocations) &&
+      /location\s+=\s+\/\s*\{/.test(nginxLocations) &&
+      /try_files\s+\/index\.html\s+@backend;/.test(nginxLocations) &&
+      /location\s+=\s+\/admin\s*\{/.test(nginxLocations) &&
+      /try_files\s+\/admin\/index\.html\s+@backend;/.test(nginxLocations) &&
+      exists(root, 'soft/ethyl-core/public/index.html') &&
+      exists(root, 'soft/ethyl-core/public/portal.css') &&
+      exists(root, 'soft/ethyl-core/public/portal.js') &&
+      exists(root, 'soft/ethyl-core/public/admin/index.html') &&
+      exists(root, 'soft/ethyl-core/public/admin.css') &&
+      exists(root, 'soft/ethyl-core/public/admin.js'),
+    CAPTIVE_PROBES:
+      ['/generate_204', '/hotspot-detect.html', '/connecttest.txt', '/ncsi.txt', '/canonical.html']
+        .every((probe) => nginxLocations.includes(`location = ${probe} { return 302 http://10.0.0.1/; }`)),
   });
 
   return Object.freeze({
